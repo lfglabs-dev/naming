@@ -55,7 +55,23 @@ mod Pricing {
         }
 
         fn get_price_per_day(self: @ContractState, number_of_character: felt252) -> u128 {
-            1
+            if number_of_character == 1 {
+                return 1068493150684932;
+            }
+
+            if number_of_character == 2 {
+                return 657534246575343;
+            }
+
+            if number_of_character == 3 {
+                return 410958904109590;
+            }
+
+            if number_of_character == 4 {
+                return 232876712328767;
+            }
+
+            return 24657534246575;
         }
     }
 }
