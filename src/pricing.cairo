@@ -55,7 +55,7 @@ mod Pricing {
         }
 
         fn get_price_per_day(self: @ContractState, domain: felt252) -> u128 {
-            let number_of_character = self.get_price_per_day(domain.into());
+            let number_of_character = self.get_amount_of_chars(domain.into());
 
             if number_of_character == 1 {
                 return 1068493150684932;
