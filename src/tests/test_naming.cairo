@@ -9,14 +9,18 @@ use super::utils;
 use naming::interface::naming::{INamingDispatcher, INamingDispatcherTrait};
 use naming::naming::main::Naming;
 use naming::pricing::Pricing;
+use openzeppelin::token::erc20::erc20::ERC20;
 
 #[cfg(test)]
 fn deploy() -> INamingDispatcher {
-
     //erc20
-    let mut calldata = ArrayTrait::<felt252>::new();
-    calldata.append(0x789);
-    let pricing = utils::deploy(Pricing::TEST_CLASS_HASH, calldata);
+    // let mut calldata = ArrayTrait::<felt252>::new();
+    // calldata.append('ether');
+    // calldata.append('ETH');
+    // calldata.append(0);
+    // calldata.append(1024);
+    // calldata.append(0x123);
+    // let eth = utils::deploy(ERC20::TEST_CLASS_HASH, calldata);
 
     // pricing
     let mut calldata = ArrayTrait::<felt252>::new();
@@ -37,7 +41,7 @@ fn deploy() -> INamingDispatcher {
 #[cfg(test)]
 #[test]
 #[available_gas(20000000000)]
-fn test_buy_price() {
+fn test_deploying() {
     deploy();
 }
 
