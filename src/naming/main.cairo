@@ -3,7 +3,7 @@ use core::array::SpanTrait;
 mod Naming {
     use starknet::ContractAddress;
     use starknet::contract_address::ContractAddressZeroable;
-    use starknet::{get_caller_address, get_contract_address};
+    use starknet::{get_caller_address, get_contract_address, get_block_timestamp};
     use traits::Into;
     use array::{ArrayTrait, SpanTrait};
     use zeroable::Zeroable;
@@ -65,6 +65,7 @@ mod Naming {
                 }.get_crosschecked_user_data(domain_data.owner, field)
             }
         }
+    // This function allows to purchase a domain
     }
 
     #[generate_trait]
@@ -78,6 +79,39 @@ mod Naming {
             let y = self.hash_domain(domain);
             let hashed_domain = pedersen(x, y);
             return hashed_domain;
+        }
+
+        fn assert_purchase_is_possible(
+            self: @ContractState, identity: u128, domain: felt252, days: u64
+        ) -> (felt252, u64, u64) {
+            let now = get_block_timestamp();
+
+            // Verify that the starknet.id doesn't already manage a domain
+            self.assert_id_availability(identity, now);
+
+            // Verify that the domain is not already taken or expired
+            let mut domain_arr = ArrayTrait::new();
+            domain_arr.append(domain);
+            let hashed_domain = self.hash_domain(domain_arr.span());
+            let data = self._domain_data.read(hashed_domain);
+            assert(data.owner == 0 || data.expiry < now, 'unexpired domain');
+
+            // Verify expiration range
+            assert(days < 365 * 25, 'max purchase of 25 years');
+            assert(days > 2 * 30, 'min purchase of 2 month');
+            return (hashed_domain, now, now + 86400 * days);
+        }
+
+        // this ensures a non expired domain is not already written on this identity
+        fn assert_id_availability(self: @ContractState, identity: u128, timestamp: u64) {
+            let id_hashed_domain = IIdentityDispatcher {
+                contract_address: self.starknetid_contract.read()
+            }.get_verifier_data(identity.into(), 'name', get_contract_address().into());
+            assert(
+                id_hashed_domain == 0
+                    || self._domain_data.read(id_hashed_domain).expiry < timestamp,
+                'this id holds a domain'
+            );
         }
 
         fn domain_to_resolver(
