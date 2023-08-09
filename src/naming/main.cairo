@@ -8,7 +8,11 @@ mod Naming {
     use array::{ArrayTrait, SpanTrait};
     use zeroable::Zeroable;
     use starknet::class_hash::ClassHash;
-    use naming::interface::naming::{INaming, INamingDispatcher, INamingDispatcherTrait};
+    use naming::interface::{
+        naming::{INaming, INamingDispatcher, INamingDispatcherTrait},
+        resolver::{IResolver, IResolverDispatcher, IResolverDispatcherTrait},
+        identity::{IIdentity, IIdentityDispatcher, IIdentityDispatcherTrait}
+    };
     use integer::{u256_safe_divmod, u256_as_non_zero};
     use core::pedersen;
 
@@ -45,9 +49,21 @@ mod Naming {
 
     #[external(v0)]
     impl NamingImpl of INaming<ContractState> {
+        // This function allows to read the single felt target of any domain for a specific field
+        // For example, it allows to find the Bitcoin address of Alice.stark by calling
+        // naming.resolve(['alice'], 'bitcoin')
         fn resolve(self: @ContractState, domain: Array<felt252>, field: felt252) -> felt252 {
             let (resolver, parent_start) = self.domain_to_resolver(@domain, 0);
-            1
+            if (resolver != ContractAddressZeroable::zero()) {
+                IResolverDispatcher {
+                    contract_address: resolver
+                }.resolve(domain.span().slice(parent_start, domain.len() - parent_start), field)
+            } else {
+                let domain_data = self._domain_data.read(self.hash_domain(domain.span()));
+                IIdentityDispatcher {
+                    contract_address: self.starknetid_contract.read()
+                }.get_crosschecked_user_data(domain_data.owner, field)
+            }
         }
     }
 
