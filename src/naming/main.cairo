@@ -11,8 +11,8 @@ mod Naming {
     use naming::interface::{
         naming::{INaming, INamingDispatcher, INamingDispatcherTrait},
         resolver::{IResolver, IResolverDispatcher, IResolverDispatcherTrait},
-        identity::{IIdentity, IIdentityDispatcher, IIdentityDispatcherTrait}
     };
+    use identity::interface::identity::{IIdentity, IIdentityDispatcher, IIdentityDispatcherTrait};
     use integer::{u256_safe_divmod, u256_as_non_zero};
     use core::pedersen;
 
