@@ -12,8 +12,9 @@ mod Naming {
     use integer::{u256_safe_divmod, u256_as_non_zero};
     use core::pedersen;
 
+    #[derive(Copy, Drop, Serde, starknet::Store)]
     struct DomainData {
-        owner: felt252, // a starknet.id
+        owner: felt252, // an identity
         resolver: ContractAddress,
         address: ContractAddress, // the legacy native address
         expiry: u64, // expiration date
