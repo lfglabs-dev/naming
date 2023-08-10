@@ -16,13 +16,36 @@ mod Naming {
         pricing::{IPricing, IPricingDispatcher, IPricingDispatcherTrait},
         referral::{IReferral, IReferralDispatcher, IReferralDispatcherTrait},
     };
+    use clone::Clone;
+    use array::ArrayTCloneImpl;
     use identity::interface::identity::{IIdentity, IIdentityDispatcher, IIdentityDispatcherTrait};
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
 
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        DomainOwner: DomainOwner,
+        DomainToResolver: DomainToResolver,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct DomainOwner {
+        #[key]
+        domain: Array<felt252>,
+        owner: u128,
+        expiry: u64
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct DomainToResolver {
+        #[key]
+        domain: Array<felt252>,
+        resolver: ContractAddress
+    }
 
     #[derive(Copy, Drop, Serde, starknet::Store)]
     struct DomainData {
-        owner: felt252, // an identity
+        owner: u128, // an identity
         resolver: ContractAddress,
         address: ContractAddress, // the legacy native address
         expiry: u64, // expiration date
@@ -72,6 +95,19 @@ mod Naming {
                 }.get_crosschecked_user_data(domain_data.owner, field)
             }
         }
+
+        fn buy(
+            ref self: ContractState,
+            id: u128,
+            domain: felt252,
+            days: u16,
+            resolver: ContractAddress,
+            sponsor: ContractAddress
+        ) {
+            let (hashed_domain, now, expiry) = self.assert_purchase_is_possible(id, domain, days);
+            self.pay_buy_domain(now, days, domain, sponsor);
+            self.mint_domain(expiry, resolver, hashed_domain, id, domain);
+        }
     }
 
     #[generate_trait]
@@ -88,7 +124,7 @@ mod Naming {
         }
 
         fn assert_purchase_is_possible(
-            self: @ContractState, identity: u128, domain: felt252, days: u64
+            self: @ContractState, identity: u128, domain: felt252, days: u16
         ) -> (felt252, u64, u64) {
             let now = get_block_timestamp();
 
@@ -105,14 +141,14 @@ mod Naming {
             // Verify expiration range
             assert(days < 365 * 25, 'max purchase of 25 years');
             assert(days > 2 * 30, 'min purchase of 2 month');
-            return (hashed_domain, now, now + 86400 * days);
+            return (hashed_domain, now, now + 86400 * days.into());
         }
 
         // this ensures a non expired domain is not already written on this identity
         fn assert_id_availability(self: @ContractState, identity: u128, timestamp: u64) {
             let id_hashed_domain = IIdentityDispatcher {
                 contract_address: self.starknetid_contract.read()
-            }.get_verifier_data(identity.into(), 'name', get_contract_address().into());
+            }.get_verifier_data(identity, 'name', get_contract_address(), 0);
             assert(
                 id_hashed_domain == 0
                     || self._domain_data.read(id_hashed_domain).expiry < timestamp,
@@ -141,12 +177,7 @@ mod Naming {
         }
 
         fn pay_buy_domain(
-            self: @ContractState,
-            now: u64,
-            days: u16,
-            caller: ContractAddress,
-            domain: felt252,
-            sponsor: ContractAddress
+            self: @ContractState, now: u64, days: u16, domain: felt252, sponsor: ContractAddress
         ) -> () {
             // find domain cost
             let (erc20, price) = IPricingDispatcher {
@@ -156,13 +187,51 @@ mod Naming {
             // pay the price
             IERC20Dispatcher {
                 contract_address: erc20
-            }.transfer_from(caller, get_contract_address(), price);
+            }.transfer_from(get_caller_address(), get_contract_address(), price);
 
             // add sponsor commission if eligible
             if sponsor.into() != 0 {
                 IReferralDispatcher {
                     contract_address: self._referral_contract.read()
                 }.add_commission(price, sponsor);
+            }
+        }
+
+        fn mint_domain(
+            ref self: ContractState,
+            expiry: u64,
+            resolver: ContractAddress,
+            hashed_domain: felt252,
+            id: u128,
+            domain: felt252
+        ) {
+            let data = DomainData {
+                owner: id,
+                resolver,
+                address: ContractAddressZeroable::zero(), // legacy native address
+                expiry,
+                key: 1,
+                parent_key: 0,
+            };
+
+            self._domain_data.write(hashed_domain, data);
+            let mut domain_arr = ArrayTrait::new();
+            domain_arr.append(domain);
+            self
+                .emit(
+                    Event::DomainOwner(
+                        DomainOwner { domain: domain_arr.clone(), owner: id, expiry }
+                    )
+                );
+
+            IIdentityDispatcher {
+                contract_address: self.starknetid_contract.read()
+            }.set_verifier_data(id, 'name', hashed_domain);
+            if (resolver.into() != 0) {
+                self
+                    .emit(
+                        Event::DomainToResolver(DomainToResolver { domain: domain_arr, resolver })
+                    );
             }
         }
     }
