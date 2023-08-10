@@ -8,13 +8,17 @@ mod Naming {
     use array::{ArrayTrait, SpanTrait};
     use zeroable::Zeroable;
     use starknet::class_hash::ClassHash;
+    use integer::{u256_safe_divmod, u256_as_non_zero};
+    use core::pedersen;
     use naming::interface::{
         naming::{INaming, INamingDispatcher, INamingDispatcherTrait},
         resolver::{IResolver, IResolverDispatcher, IResolverDispatcherTrait},
+        pricing::{IPricing, IPricingDispatcher, IPricingDispatcherTrait},
+        referral::{IReferral, IReferralDispatcher, IReferralDispatcherTrait},
     };
     use identity::interface::identity::{IIdentity, IIdentityDispatcher, IIdentityDispatcherTrait};
-    use integer::{u256_safe_divmod, u256_as_non_zero};
-    use core::pedersen;
+    use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+
 
     #[derive(Copy, Drop, Serde, starknet::Store)]
     struct DomainData {
@@ -30,6 +34,7 @@ mod Naming {
     struct Storage {
         starknetid_contract: ContractAddress,
         _pricing_contract: ContractAddress,
+        _referral_contract: ContractAddress,
         _admin_address: ContractAddress,
         _domain_data: LegacyMap<felt252, DomainData>,
     }
@@ -39,10 +44,12 @@ mod Naming {
         ref self: ContractState,
         starknetid: ContractAddress,
         pricing: ContractAddress,
+        referral: ContractAddress,
         admin: ContractAddress
     ) {
         self.starknetid_contract.write(starknetid);
         self._pricing_contract.write(pricing);
+        self._referral_contract.write(referral);
         self._admin_address.write(admin);
     }
 
@@ -65,7 +72,6 @@ mod Naming {
                 }.get_crosschecked_user_data(domain_data.owner, field)
             }
         }
-    // This function allows to purchase a domain
     }
 
     #[generate_trait]
@@ -131,6 +137,32 @@ mod Naming {
                 return (domain_data.resolver, parent_start_id);
             } else {
                 return self.domain_to_resolver(domain, parent_start_id + 1);
+            }
+        }
+
+        fn pay_buy_domain(
+            self: @ContractState,
+            now: u64,
+            days: u16,
+            caller: ContractAddress,
+            domain: felt252,
+            sponsor: ContractAddress
+        ) -> () {
+            // find domain cost
+            let (erc20, price) = IPricingDispatcher {
+                contract_address: self._pricing_contract.read()
+            }.compute_buy_price(domain, days);
+
+            // pay the price
+            IERC20Dispatcher {
+                contract_address: erc20
+            }.transfer_from(caller, get_contract_address(), price);
+
+            // add sponsor commission if eligible
+            if sponsor.into() != 0 {
+                IReferralDispatcher {
+                    contract_address: self._referral_contract.read()
+                }.add_commission(price, sponsor);
             }
         }
     }
