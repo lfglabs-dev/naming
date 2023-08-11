@@ -109,6 +109,9 @@ mod Naming {
             }
         }
 
+        // This functions allows to resolve a domain to a native address. Its output is designed
+        // to be used as a parameter for other functions (for example if you want to send ERC20
+        // to a .stark)
         fn domain_to_address(self: @ContractState, domain: Span<felt252>) -> ContractAddress {
             let resolve_result = self.resolve(domain, 'starknet');
             if resolve_result != 0 {
