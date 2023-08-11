@@ -60,6 +60,7 @@ mod Naming {
         _referral_contract: ContractAddress,
         _admin_address: ContractAddress,
         _domain_data: LegacyMap<felt252, DomainData>,
+        _address_to_domain: LegacyMap<(ContractAddress, usize), felt252>
     }
 
     #[constructor]
@@ -126,6 +127,22 @@ mod Naming {
                 contract_address: self.starknetid_contract.read()
             }.owner_of(data.owner)
         }
+
+        // This returns the identity (StarknetID) owning the domain
+        fn domain_to_id(self: @ContractState, domain: Span<felt252>) -> u128 {
+            self._domain_data.read(self.hash_domain(domain)).owner
+        }
+
+        // This function allows to find which domain to use to display an account
+        fn address_to_domain(self: @ContractState, address: ContractAddress) -> Array<felt252> {
+            let mut domain = ArrayTrait::new();
+            self._address_to_domain_util(address, ref domain);
+            if domain.len() != 0 && self.domain_to_address(domain.span()) == address {
+                domain
+            } else {
+                self.domain_to_id(domain)
+            }
+        }
     }
 
     #[generate_trait]
@@ -172,6 +189,18 @@ mod Naming {
                     || self._domain_data.read(id_hashed_domain).expiry < timestamp,
                 'this id holds a domain'
             );
+        }
+
+        fn _address_to_domain_util(
+            self: @ContractState, address: ContractAddress, ref domain: Array<felt252>
+        ) -> usize {
+            let subdomain = self._address_to_domain.read((address, domain.len()));
+            if subdomain == 0 {
+                domain.len()
+            } else {
+                domain.append(subdomain);
+                self._address_to_domain_util(address, ref domain)
+            }
         }
 
         fn domain_to_resolver(
