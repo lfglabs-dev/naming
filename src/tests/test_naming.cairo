@@ -33,6 +33,7 @@ fn deploy() -> INamingDispatcher {
     let admin = 0x123;
     calldata.append(starknetid);
     calldata.append(pricing.into());
+    calldata.append(0);
     calldata.append(admin);
     let address = utils::deploy(Naming::TEST_CLASS_HASH, calldata);
     INamingDispatcher { contract_address: address }
