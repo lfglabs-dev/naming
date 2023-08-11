@@ -1,10 +1,10 @@
-use core::array::SpanTrait;
 #[starknet::contract]
 mod Naming {
+    use option::OptionTrait;
     use starknet::ContractAddress;
     use starknet::contract_address::ContractAddressZeroable;
     use starknet::{get_caller_address, get_contract_address, get_block_timestamp};
-    use traits::Into;
+    use traits::{Into, TryInto};
     use array::{ArrayTrait, SpanTrait};
     use zeroable::Zeroable;
     use starknet::class_hash::ClassHash;
@@ -79,23 +79,6 @@ mod Naming {
 
     #[external(v0)]
     impl NamingImpl of INaming<ContractState> {
-        // This function allows to read the single felt target of any domain for a specific field
-        // For example, it allows to find the Bitcoin address of Alice.stark by calling
-        // naming.resolve(['alice'], 'bitcoin')
-        fn resolve(self: @ContractState, domain: Array<felt252>, field: felt252) -> felt252 {
-            let (resolver, parent_start) = self.domain_to_resolver(@domain, 0);
-            if (resolver != ContractAddressZeroable::zero()) {
-                IResolverDispatcher {
-                    contract_address: resolver
-                }.resolve(domain.span().slice(parent_start, domain.len() - parent_start), field)
-            } else {
-                let domain_data = self._domain_data.read(self.hash_domain(domain.span()));
-                IIdentityDispatcher {
-                    contract_address: self.starknetid_contract.read()
-                }.get_crosschecked_user_data(domain_data.owner, field)
-            }
-        }
-
         fn buy(
             ref self: ContractState,
             id: u128,
@@ -107,6 +90,38 @@ mod Naming {
             let (hashed_domain, now, expiry) = self.assert_purchase_is_possible(id, domain, days);
             self.pay_buy_domain(now, days, domain, sponsor);
             self.mint_domain(expiry, resolver, hashed_domain, id, domain);
+        }
+
+        // This function allows to read the single felt target of any domain for a specific field
+        // For example, it allows to find the Bitcoin address of Alice.stark by calling
+        // naming.resolve(['alice'], 'bitcoin')
+        fn resolve(self: @ContractState, domain: Span<felt252>, field: felt252) -> felt252 {
+            let (resolver, parent_start) = self.domain_to_resolver(domain, 0);
+            if (resolver != ContractAddressZeroable::zero()) {
+                IResolverDispatcher {
+                    contract_address: resolver
+                }.resolve(domain.slice(parent_start, domain.len() - parent_start), field)
+            } else {
+                let domain_data = self._domain_data.read(self.hash_domain(domain));
+                IIdentityDispatcher {
+                    contract_address: self.starknetid_contract.read()
+                }.get_crosschecked_user_data(domain_data.owner, field)
+            }
+        }
+
+        fn domain_to_address(self: @ContractState, domain: Span<felt252>) -> ContractAddress {
+            let resolve_result = self.resolve(domain, 'starknet');
+            if resolve_result != 0 {
+                let addr: Option<ContractAddress> = resolve_result.try_into();
+                return addr.unwrap();
+            }
+            let data = self._domain_data.read(self.hash_domain(domain));
+            if data.address.into() != 0 {
+                return data.address;
+            }
+            IIdentityDispatcher {
+                contract_address: self.starknetid_contract.read()
+            }.owner_of(data.owner)
         }
     }
 
@@ -157,7 +172,7 @@ mod Naming {
         }
 
         fn domain_to_resolver(
-            self: @ContractState, domain: @Array<felt252>, parent_start_id: u32
+            self: @ContractState, domain: Span<felt252>, parent_start_id: u32
         ) -> (ContractAddress, u32) {
             if parent_start_id == domain.len() {
                 return (ContractAddressZeroable::zero(), 0);
@@ -165,7 +180,7 @@ mod Naming {
 
             // hashing parent_domain
             let hashed_domain = self
-                .hash_domain(domain.span().slice(parent_start_id, domain.len() - parent_start_id));
+                .hash_domain(domain.slice(parent_start_id, domain.len() - parent_start_id));
 
             let domain_data = self._domain_data.read(hashed_domain);
 
