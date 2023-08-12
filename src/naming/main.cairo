@@ -60,7 +60,8 @@ mod Naming {
         _referral_contract: ContractAddress,
         _admin_address: ContractAddress,
         _domain_data: LegacyMap<felt252, DomainData>,
-        _address_to_domain: LegacyMap<(ContractAddress, usize), felt252>
+        _hash_to_domain: LegacyMap<(felt252, usize), felt252>,
+        _address_to_domain: LegacyMap<(ContractAddress, usize), felt252>,
     }
 
     #[constructor]
@@ -140,7 +141,15 @@ mod Naming {
             if domain.len() != 0 && self.domain_to_address(domain.span()) == address {
                 domain
             } else {
-                self.domain_to_id(domain)
+                let id = self.domain_to_id(domain.span());
+                let id_hashed_domain = IIdentityDispatcher {
+                    contract_address: self.starknetid_contract.read()
+                }.get_verifier_data(id, 'name', get_contract_address(), 0);
+                let domain = self.unhash_domain(id_hashed_domain);
+                assert(
+                    self.domain_to_address(domain.span()) == address, 'domain not pointing back'
+                );
+                domain
             }
         }
     }
@@ -156,6 +165,19 @@ mod Naming {
             let y = self.hash_domain(domain);
             let hashed_domain = pedersen(x, y);
             return hashed_domain;
+        }
+
+        fn unhash_domain(self: @ContractState, domain_hash: felt252) -> Array<felt252> {
+            let mut i = 0;
+            let mut domain = ArrayTrait::new();
+            loop {
+                let domain_part = self._hash_to_domain.read((domain_hash, i));
+                if domain_part == 0 {
+                    break;
+                }
+                domain.append(domain_part);
+            };
+            domain
         }
 
         fn assert_purchase_is_possible(
@@ -260,7 +282,7 @@ mod Naming {
                 key: 1,
                 parent_key: 0,
             };
-
+            self._hash_to_domain.write((hashed_domain, 0), hashed_domain);
             self._domain_data.write(hashed_domain, data);
             let mut domain_arr = ArrayTrait::new();
             domain_arr.append(domain);
