@@ -142,10 +142,13 @@ mod Naming {
             if domain.len() != 0 && self.domain_to_address(domain.span()) == address {
                 domain
             } else {
-                let id = self.domain_to_id(domain.span());
-                let id_hashed_domain = IIdentityDispatcher {
+                let identity = IIdentityDispatcher {
                     contract_address: self.starknetid_contract.read()
-                }.get_verifier_data(id, 'name', get_contract_address(), 0);
+                };
+                let id = identity.get_main_id(address);
+                assert(id != 0, 'an id cannot be null');
+                let id_hashed_domain = identity
+                    .get_verifier_data(id, 'name', get_contract_address(), 0);
                 let domain = self.unhash_domain(id_hashed_domain);
                 assert(
                     self.domain_to_address(domain.span()) == address, 'domain not pointing back'
