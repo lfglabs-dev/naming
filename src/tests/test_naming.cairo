@@ -6,16 +6,17 @@ use starknet::testing;
 use starknet::ContractAddress;
 use starknet::contract_address::ContractAddressZeroable;
 use starknet::contract_address_const;
-use starknet::testing::set_caller_address;
+use starknet::testing::set_contract_address;
 use super::utils;
-use identity::identity::main::Identity;
+use identity::interface::identity::{IIdentityDispatcher, IIdentityDispatcherTrait};
 use naming::interface::naming::{INamingDispatcher, INamingDispatcherTrait};
 use naming::naming::main::Naming;
 use naming::pricing::Pricing;
+use super::identity::Identity;
 use super::erc20::ERC20;
 
 #[cfg(test)]
-fn deploy() -> INamingDispatcher {
+fn deploy() -> (IIdentityDispatcher, INamingDispatcher) {
     //erc20
     let mut calldata = ArrayTrait::<felt252>::new();
     calldata.append('ether');
@@ -41,18 +42,34 @@ fn deploy() -> INamingDispatcher {
     calldata.append(0);
     calldata.append(admin);
     let address = utils::deploy(Naming::TEST_CLASS_HASH, calldata);
-    INamingDispatcher { contract_address: address }
+    (
+        IIdentityDispatcher {
+            contract_address: identity
+            }, INamingDispatcher {
+            contract_address: address
+        }
+    )
 }
 
 #[cfg(test)]
 #[test]
-#[available_gas(20000000000)]
+#[available_gas(2000000000)]
 fn test_deploying() {
-    let naming = deploy();
-    let caller = contract_address_const::<0x123>();
-    set_caller_address(caller);
+    let (identity, naming) = deploy();
 
-    let th0rgal = 33133781693;
-    //naming.buy(1, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero());
+    let caller = contract_address_const::<0x123>();
+    set_contract_address(caller);
+
+    let id: u128 = 1;
+    let th0rgal: felt252 = 33133781693;
+    identity.mint(id);
+// no resolver, no sponsor
+//naming.buy(id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero());
+
+//let mut domain_arr = ArrayTrait::<felt252>::new();
+//domain_arr.append(th0rgal);
+
+//let target: felt252 = naming.domain_to_address(domain_arr.span()).into();
+//target.print();
 }
 

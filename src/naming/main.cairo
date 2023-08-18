@@ -295,7 +295,7 @@ mod Naming {
 
             IIdentityDispatcher {
                 contract_address: self.starknetid_contract.read()
-            }.set_verifier_data(id, 'name', hashed_domain);
+            }.set_verifier_data(id, 'name', hashed_domain, 0);
             if (resolver.into() != 0) {
                 self
                     .emit(
