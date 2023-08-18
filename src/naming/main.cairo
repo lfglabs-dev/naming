@@ -20,6 +20,7 @@ mod Naming {
     use array::ArrayTCloneImpl;
     use identity::interface::identity::{IIdentity, IIdentityDispatcher, IIdentityDispatcherTrait};
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+    use debug::PrintTrait;
 
     #[event]
     #[derive(Drop, starknet::Event)]
@@ -162,7 +163,7 @@ mod Naming {
             }
             let new_len = domain.len() - 1;
             let x = *domain[new_len];
-            let y = self.hash_domain(domain);
+            let y = self.hash_domain(domain.slice(0, new_len));
             let hashed_domain = pedersen(x, y);
             return hashed_domain;
         }
@@ -257,7 +258,6 @@ mod Naming {
             IERC20Dispatcher {
                 contract_address: erc20
             }.transfer_from(get_caller_address(), get_contract_address(), price);
-
             // add sponsor commission if eligible
             if sponsor.into() != 0 {
                 IReferralDispatcher {
