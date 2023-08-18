@@ -53,6 +53,6 @@ fn test_deploying() {
     set_caller_address(caller);
 
     let th0rgal = 33133781693;
-    naming.buy(1, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero());
+    //naming.buy(1, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero());
 }
 

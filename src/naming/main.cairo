@@ -185,7 +185,7 @@ mod Naming {
         ) -> (felt252, u64, u64) {
             let now = get_block_timestamp();
 
-            Verify that the starknet.id doesn't already manage a domain
+            // Verify that the starknet.id doesn't already manage a domain
             self.assert_id_availability(identity, now);
 
             // Verify that the domain is not already taken or expired
