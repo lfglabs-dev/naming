@@ -104,6 +104,10 @@ mod Naming {
             self.mint_domain(expiry, resolver, hashed_domain, id, domain);
         }
 
+        fn transfer_domain(ref self: ContractState, domain: Span<felt252>, target_id: u128) {
+            return;
+        }
+
         // This function allows to read the single felt target of any domain for a specific field
         // For example, it allows to find the Bitcoin address of Alice.stark by calling
         // naming.resolve(['alice'], 'bitcoin')
@@ -210,6 +214,51 @@ mod Naming {
             assert(days < 365 * 25, 'max purchase of 25 years');
             assert(days > 2 * 30, 'min purchase of 2 month');
             return (hashed_domain, now, now + 86400 * days.into());
+        }
+
+        fn assert_control_domain(
+            self: @ContractState, domain: Span<felt252>, account: ContractAddress
+        ) {
+            // 1. account owns the domain
+            self._assert_is_owner(domain, account);
+
+            // 2. check domain expiration
+            let hashed_root_domain = self.hash_domain(domain.slice(domain.len() - 1, domain.len()));
+            let root_domain_data = self._domain_data.read(hashed_root_domain);
+            assert(root_domain_data.expiry <= get_block_timestamp(), 'this domain has expired');
+        }
+
+        fn _assert_is_owner(
+            self: @ContractState, domain: Span<felt252>, account: ContractAddress
+        ) -> u32 {
+            let hashed_domain = self.hash_domain(domain);
+            let data = self._domain_data.read(hashed_domain);
+
+            // because erc721 crashes on zero
+            let owner = if data.owner == 0 {
+                ContractAddressZeroable::zero()
+            } else {
+                IIdentityDispatcher {
+                    contract_address: self.starknetid_contract.read()
+                }.owner_of(data.owner)
+            };
+
+            // if caller owns the starknet id, he owns the domain, we return the key
+            if owner == get_caller_address() {
+                return data.key;
+            }
+
+            // otherwise, if it is a root domain, he doesn't own it
+            assert(domain.len() != 1 || domain.len() == 0, 'you don\'t own this domain');
+
+            // if he doesn't own the starknet id, and doesn't own the domain, he might own the parent domain
+            let parent_key = self._assert_is_owner(domain.slice(1, domain.len()), account);
+            // we ensure that the key is the same as the parent key
+            // this is to allow to revoke all subdomains in o(1) writes, by juste updating the key of the parent
+            if (data.parent_key != 0) {
+                assert(parent_key == data.parent_key, 'you don\'t own this domain');
+            }
+            data.key
         }
 
         // this ensures a non expired domain is not already written on this identity

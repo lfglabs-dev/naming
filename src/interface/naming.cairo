@@ -12,6 +12,8 @@ trait INaming<TContractState> {
         metadata: felt252,
     );
 
+    fn transfer_domain(ref self: TContractState, domain: Span<felt252>, target_id: u128);
+
     fn resolve(self: @TContractState, domain: Span<felt252>, field: felt252) -> felt252;
 
     fn domain_to_id(self: @TContractState, domain: Span<felt252>) -> u128;
