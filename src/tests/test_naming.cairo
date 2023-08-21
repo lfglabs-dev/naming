@@ -1,5 +1,7 @@
 use array::ArrayTrait;
+use array::SpanTrait;
 use debug::PrintTrait;
+use option::OptionTrait;
 use zeroable::Zeroable;
 use traits::Into;
 use starknet::testing;
@@ -78,4 +80,18 @@ fn test_basic_usage() {
     assert(naming.resolve(domain, 'starknet') == 0, 'non empty starknet field');
     // so it should resolve to the starknetid owner
     assert(naming.domain_to_address(domain) == caller, 'wrong domain target');
+
+    // let's try reverse resolving
+    identity.set_main_id(id);
+    assert(domain.len() == 1, 'invalid domain length');
+    assert(domain.at(0) == @th0rgal, 'wrong domain');
+
+    // now let's change the target
+    let new_target = contract_address_const::<0x456>();
+    identity.set_user_data(id, 'starknet', new_target.into(), 0);
+
+    // now we should have nothing written
+    assert(naming.resolve(domain, 'starknet') == new_target.into(), 'wrong starknet field');
+    // and it should resolve to the new domain target
+    assert(naming.domain_to_address(domain) == new_target, 'wrong domain target');
 }
