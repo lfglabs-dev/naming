@@ -8,7 +8,8 @@ trait INaming<TContractState> {
         domain: felt252,
         days: u16,
         resolver: ContractAddress,
-        sponsor: ContractAddress
+        sponsor: ContractAddress,
+        metadata: felt252,
     );
 
     fn resolve(self: @TContractState, domain: Span<felt252>, field: felt252) -> felt252;

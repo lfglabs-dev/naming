@@ -27,6 +27,7 @@ mod Naming {
     enum Event {
         DomainOwner: DomainOwner,
         DomainToResolver: DomainToResolver,
+        SaleMetadata: SaleMetadata,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -42,6 +43,12 @@ mod Naming {
         #[key]
         domain: Array<felt252>,
         resolver: ContractAddress
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct SaleMetadata {
+        domain: felt252,
+        metadata: felt252
     }
 
     #[derive(Copy, Drop, Serde, starknet::Store)]
@@ -88,10 +95,12 @@ mod Naming {
             domain: felt252,
             days: u16,
             resolver: ContractAddress,
-            sponsor: ContractAddress
+            sponsor: ContractAddress,
+            metadata: felt252,
         ) {
             let (hashed_domain, now, expiry) = self.assert_purchase_is_possible(id, domain, days);
             self.pay_buy_domain(now, days, domain, sponsor);
+            self.emit(Event::SaleMetadata(SaleMetadata { domain, metadata }));
             self.mint_domain(expiry, resolver, hashed_domain, id, domain);
         }
 

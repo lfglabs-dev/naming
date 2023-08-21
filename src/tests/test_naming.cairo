@@ -77,8 +77,9 @@ fn test_basic_usage() {
     // we allow the naming to take our money
     eth.approve(naming.contract_address, price);
 
-    // we buy with no resolver and no sponsor
-    naming.buy(id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero());
+    // we buy with no resolver, no sponsor and empty metadata
+    naming
+        .buy(id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0);
 
     // let's try the resolving
     let domain = array![th0rgal].span();
