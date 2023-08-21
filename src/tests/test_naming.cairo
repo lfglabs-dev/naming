@@ -94,4 +94,9 @@ fn test_basic_usage() {
     assert(naming.resolve(domain, 'starknet') == new_target.into(), 'wrong starknet field');
     // and it should resolve to the new domain target
     assert(naming.domain_to_address(domain) == new_target, 'wrong domain target');
+
+    // testing ownership transfer
+    let new_id = 2;
+    naming.transfer_domain(domain, new_id);
+    assert(naming.domain_to_id(domain) == new_id, 'owner not updated correctly');
 }

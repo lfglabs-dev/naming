@@ -27,6 +27,7 @@ mod Naming {
     enum Event {
         DomainOwner: DomainOwner,
         DomainToResolver: DomainToResolver,
+        DomainTransfer: DomainTransfer,
         SaleMetadata: SaleMetadata,
     }
 
@@ -43,6 +44,14 @@ mod Naming {
         #[key]
         domain: Array<felt252>,
         resolver: ContractAddress
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct DomainTransfer {
+        #[key]
+        domain: Span<felt252>,
+        prev_owner: u128,
+        new_owner: u128
     }
 
     #[derive(Drop, starknet::Event)]
@@ -105,6 +114,50 @@ mod Naming {
         }
 
         fn transfer_domain(ref self: ContractState, domain: Span<felt252>, target_id: u128) {
+            self.assert_control_domain(domain, get_caller_address());
+
+            // Write domain owner
+            let hashed_domain = self.hash_domain(domain);
+            let current_domain_data = self._domain_data.read(hashed_domain);
+
+            // ensure target doesn't already have a domain
+            let now = get_block_timestamp();
+            self.assert_id_availability(target_id, now);
+
+            let new_domain_data = DomainData {
+                owner: target_id,
+                resolver: current_domain_data.resolver,
+                address: current_domain_data.address,
+                expiry: current_domain_data.expiry,
+                key: current_domain_data.key,
+                // no parent_domain check for root domains
+                parent_key: if domain.len() == 1 {
+                    current_domain_data.parent_key
+                } else {
+                    let hashed_parent_domain = self.hash_domain(domain.slice(1, domain.len() - 1));
+                    let next_domain_data = self._domain_data.read(hashed_parent_domain);
+                    next_domain_data.key
+                }
+            };
+
+            self._domain_data.write(hashed_domain, new_domain_data);
+            self
+                .emit(
+                    Event::DomainTransfer(
+                        DomainTransfer {
+                            domain: domain,
+                            prev_owner: current_domain_data.owner,
+                            new_owner: new_domain_data.owner
+                        }
+                    )
+                );
+
+            IIdentityDispatcher {
+                contract_address: self.starknetid_contract.read()
+            }.set_verifier_data(current_domain_data.owner, 'name', 0, 0);
+            IIdentityDispatcher {
+                contract_address: self.starknetid_contract.read()
+            }.set_verifier_data(target_id, 'name', hashed_domain, 0);
             return;
         }
 
@@ -225,7 +278,7 @@ mod Naming {
             // 2. check domain expiration
             let hashed_root_domain = self.hash_domain(domain.slice(domain.len() - 1, domain.len()));
             let root_domain_data = self._domain_data.read(hashed_root_domain);
-            assert(root_domain_data.expiry <= get_block_timestamp(), 'this domain has expired');
+            assert(get_block_timestamp() <= root_domain_data.expiry, 'this domain has expired');
         }
 
         fn _assert_is_owner(
