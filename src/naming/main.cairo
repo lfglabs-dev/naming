@@ -202,9 +202,7 @@ mod Naming {
             self.assert_id_availability(identity, now);
 
             // Verify that the domain is not already taken or expired
-            let mut domain_arr = ArrayTrait::new();
-            domain_arr.append(domain);
-            let hashed_domain = self.hash_domain(domain_arr.span());
+            let hashed_domain = self.hash_domain(array![domain].span());
             let data = self._domain_data.read(hashed_domain);
             assert(data.owner == 0 || data.expiry < now, 'unexpired domain');
 
@@ -296,8 +294,7 @@ mod Naming {
             };
             self._hash_to_domain.write((hashed_domain, 0), hashed_domain);
             self._domain_data.write(hashed_domain, data);
-            let mut domain_arr = ArrayTrait::new();
-            domain_arr.append(domain);
+            let mut domain_arr = array![domain];
             self
                 .emit(
                     Event::DomainOwner(
