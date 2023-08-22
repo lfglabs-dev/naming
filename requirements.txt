@@ -1,0 +1,5 @@
+python-dotenv
+starknet-py==0.17.0-alpha
+case-converter==1.1.0
+requests
+cairo-lang
