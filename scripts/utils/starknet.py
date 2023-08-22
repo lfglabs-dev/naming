@@ -193,7 +193,6 @@ async def deploy_v2(contract_name, *args):
     )
 
     await deploy_result.wait_for_acceptance()
-    print("deploy_result", deploy_result)
 
     logger.info(
         f"✅ {contract_name} deployed at: {hex(deploy_result.deployed_contract.address)}"

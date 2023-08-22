@@ -29,29 +29,24 @@ async def main():
     dump_declarations(class_hash)
 
     deployments = {}
-    
     deployments["naming_Identity"] = await deploy_v2(
         "naming_Identity",
     )
-    print(type(deployments["naming_Identity"]))
+    identity_addr = deployments["naming_Identity"]["address"]
 
     deployments["naming_Pricing"] = await deploy_v2(
         "naming_Pricing",
         ETH_TOKEN_ADDRESS,
     )
-    # print(
-    #     type(deployments["naming_Pricing"]),
-    # )
-    # deployments["naming_Identity"] = await deploy_v2(
-    #     "naming_Identity",
-    # )
-    # deployments["naming_Naming"] = await deploy_v2(
-    #     "naming_Naming",
-    #     deployments["naming_Identity"],
-    #     deployments["naming_Pricing"],
-    #     0,
-    #     account.address,
-    # )
+    pricing_addr = deployments["naming_Pricing"]["address"]
+
+    deployments["naming_Naming"] = await deploy_v2(
+        "naming_Naming",
+        identity_addr,
+        pricing_addr,
+        0,
+        account.address,
+    )
     dump_deployments(deployments)
 
 
