@@ -113,6 +113,25 @@ mod Naming {
             self.mint_domain(expiry, resolver, hashed_domain, id, domain);
         }
 
+        fn set_admin(ref self: ContractState, new_admin: ContractAddress) {
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self._admin_address.write(new_admin);
+        }
+
+        fn claim_balance(ref self: ContractState, erc20: ContractAddress) {
+            let balance = IERC20Dispatcher {
+                contract_address: erc20
+            }.balance_of(get_contract_address());
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            IERC20Dispatcher { contract_address: erc20 }.transfer(get_caller_address(), balance);
+        }
+
+        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
+            // todo: use components
+            assert(!new_class_hash.is_zero(), 'Class hash cannot be zero');
+            starknet::replace_class_syscall(new_class_hash).unwrap_syscall();
+        }
+
         fn transfer_domain(ref self: ContractState, domain: Span<felt252>, target_id: u128) {
             self.assert_control_domain(domain, get_caller_address());
 
