@@ -302,7 +302,7 @@ mod Naming {
             }
 
             // otherwise, if it is a root domain, he doesn't own it
-            assert(domain.len() != 1 || domain.len() == 0, 'you don\'t own this domain');
+            assert(domain.len() == 1 || domain.len() == 0, 'you don\'t own this domain');
 
             // if he doesn't own the starknet id, and doesn't own the domain, he might own the parent domain
             let parent_key = self._assert_is_owner(domain.slice(1, domain.len()), account);
