@@ -100,3 +100,31 @@ fn test_basic_usage() {
     naming.transfer_domain(domain, new_id);
     assert(naming.domain_to_id(domain) == new_id, 'owner not updated correctly');
 }
+
+
+#[cfg(test)]
+#[test]
+#[available_gas(2000000000)]
+#[should_panic(expected: ('u256_sub Overflow', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED'))]
+fn test_not_enough_eth() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    // 0x789 doesn't have eth
+    let caller = contract_address_const::<0x789>();
+    set_contract_address(caller);
+    let id: u128 = 1;
+    let th0rgal: felt252 = 33133781693;
+
+    //we mint an id
+    identity.mint(id);
+
+    // we check how much a domain costs
+    let (_, price) = pricing.compute_buy_price(th0rgal, 365);
+
+    // we allow the naming to take our money
+    eth.approve(naming.contract_address, price);
+
+    // we buy with no resolver, no sponsor and empty metadata (and also no money)
+    naming
+        .buy(id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0);
+}
