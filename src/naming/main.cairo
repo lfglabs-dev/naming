@@ -328,14 +328,14 @@ mod Naming {
             }
 
             // otherwise, if it is a root domain, he doesn't own it
-            assert(domain.len() != 1 && domain.len() != 0, 'you don\'t own this domain1');
+            assert(domain.len() != 1 && domain.len() != 0, 'you don\'t own this domain');
 
             // if he doesn't own the starknet id, and doesn't own the domain, he might own the parent domain
             let parent_key = self._assert_is_owner(domain.slice(1, domain.len() - 1), account);
             // we ensure that the key is the same as the parent key
             // this is to allow to revoke all subdomains in o(1) writes, by juste updating the key of the parent
             if (data.parent_key != 0) {
-                assert(parent_key == data.parent_key, 'you don\'t own this domain2');
+                assert(parent_key == data.parent_key, 'you no longer own this domain');
             }
             data.key
         }

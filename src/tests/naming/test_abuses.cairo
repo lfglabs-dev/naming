@@ -116,3 +116,60 @@ fn test_buying_twice_on_same_id() {
             id, altdomain, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0
         );
 }
+
+#[cfg(test)]
+#[test]
+#[available_gas(2000000000)]
+#[should_panic(expected: ('you don\'t own this domain', 'ENTRYPOINT_FAILED'))]
+fn test_non_owner_cannot_transfer_domain() {
+    // setup
+    let (_, _, identity, naming) = deploy();
+
+    let caller_owner = contract_address_const::<0x123>();
+    let caller_not_owner = contract_address_const::<0x456>();
+
+    set_contract_address(caller_owner);
+
+    let id_owner = 1;
+    let id_not_owner = 2;
+    let domain_name = array![33133781693].span(); // th0rgal
+
+    // Mint IDs for both users.
+    identity.mint(id_owner);
+
+    // Assuming you've already acquired the domain for id_owner.
+    // Transfer domain using a non-owner ID should panic.
+    set_contract_address(caller_not_owner);
+    identity.mint(id_not_owner);
+    naming.transfer_domain(domain_name, id_not_owner);
+}
+
+#[cfg(test)]
+#[test]
+#[available_gas(2000000000)]
+#[should_panic(expected: ('you are not admin', 'ENTRYPOINT_FAILED'))]
+fn test_non_admin_cannot_set_admin() {
+    // setup
+    let (_, _, _, naming) = deploy();
+    let non_admin_address = contract_address_const::<0x456>();
+    set_contract_address(non_admin_address);
+
+    // A non-admin tries to set a new admin
+    let new_admin = contract_address_const::<0x789>();
+    naming.set_admin(new_admin);
+}
+
+#[cfg(test)]
+#[test]
+#[available_gas(2000000000)]
+#[should_panic(expected: ('you are not admin', 'ENTRYPOINT_FAILED'))]
+fn test_non_admin_cannot_claim_balance() {
+    // setup
+    let (eth, _, _, naming) = deploy();
+    let non_admin_address = contract_address_const::<0x456>();
+    set_contract_address(non_admin_address);
+
+    // A non-admin tries to claim the balance of the contract
+    naming.claim_balance(eth.contract_address);
+}
+
