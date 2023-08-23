@@ -35,11 +35,11 @@ fn test_buy_price() {
 
     // Test with "ben" / 3 letters and one year
     let (erc20, price) = pricing.compute_buy_price(18925, 365);
-    assert(price == 150000000000000350, 'incorrect price');
+    assert(price == 73000000000000000, 'incorrect price');
 
     // Test with "benj" / 4 letters and one year
     let (erc20, price) = pricing.compute_buy_price(512773, 365);
-    assert(price == 84999999999999955, 'incorrect price');
+    assert(price == 26999999999999990, 'incorrect price');
 
     // Test with "chocolate" / 9 letters and one year
     let (erc20, price) = pricing.compute_buy_price(19565965532212, 365);
