@@ -98,87 +98,7 @@ mod Naming {
 
     #[external(v0)]
     impl NamingImpl of INaming<ContractState> {
-        fn buy(
-            ref self: ContractState,
-            id: u128,
-            domain: felt252,
-            days: u16,
-            resolver: ContractAddress,
-            sponsor: ContractAddress,
-            metadata: felt252,
-        ) {
-            let (hashed_domain, now, expiry) = self.assert_purchase_is_possible(id, domain, days);
-            self.pay_buy_domain(now, days, domain, sponsor);
-            self.emit(Event::SaleMetadata(SaleMetadata { domain, metadata }));
-            self.mint_domain(expiry, resolver, hashed_domain, id, domain);
-        }
-
-        fn set_admin(ref self: ContractState, new_admin: ContractAddress) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
-            self._admin_address.write(new_admin);
-        }
-
-        fn claim_balance(ref self: ContractState, erc20: ContractAddress) {
-            let balance = IERC20Dispatcher {
-                contract_address: erc20
-            }.balance_of(get_contract_address());
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
-            IERC20Dispatcher { contract_address: erc20 }.transfer(get_caller_address(), balance);
-        }
-
-        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
-            // todo: use components
-            assert(!new_class_hash.is_zero(), 'Class hash cannot be zero');
-            starknet::replace_class_syscall(new_class_hash).unwrap_syscall();
-        }
-
-        fn transfer_domain(ref self: ContractState, domain: Span<felt252>, target_id: u128) {
-            self.assert_control_domain(domain, get_caller_address());
-
-            // Write domain owner
-            let hashed_domain = self.hash_domain(domain);
-            let current_domain_data = self._domain_data.read(hashed_domain);
-
-            // ensure target doesn't already have a domain
-            let now = get_block_timestamp();
-            self.assert_id_availability(target_id, now);
-
-            let new_domain_data = DomainData {
-                owner: target_id,
-                resolver: current_domain_data.resolver,
-                address: current_domain_data.address,
-                expiry: current_domain_data.expiry,
-                key: current_domain_data.key,
-                // no parent_domain check for root domains
-                parent_key: if domain.len() == 1 {
-                    current_domain_data.parent_key
-                } else {
-                    let hashed_parent_domain = self.hash_domain(domain.slice(1, domain.len() - 1));
-                    let next_domain_data = self._domain_data.read(hashed_parent_domain);
-                    next_domain_data.key
-                }
-            };
-
-            self._domain_data.write(hashed_domain, new_domain_data);
-            self
-                .emit(
-                    Event::DomainTransfer(
-                        DomainTransfer {
-                            domain: domain,
-                            prev_owner: current_domain_data.owner,
-                            new_owner: new_domain_data.owner
-                        }
-                    )
-                );
-
-            IIdentityDispatcher {
-                contract_address: self.starknetid_contract.read()
-            }.set_verifier_data(current_domain_data.owner, 'name', 0, 0);
-            IIdentityDispatcher {
-                contract_address: self.starknetid_contract.read()
-            }.set_verifier_data(target_id, 'name', hashed_domain, 0);
-            return;
-        }
+        // VIEW
 
         // This function allows to read the single felt target of any domain for a specific field
         // For example, it allows to find the Bitcoin address of Alice.stark by calling
@@ -240,6 +160,94 @@ mod Naming {
                 );
                 domain
             }
+        }
+
+
+        // EXTERNAL
+
+        fn buy(
+            ref self: ContractState,
+            id: u128,
+            domain: felt252,
+            days: u16,
+            resolver: ContractAddress,
+            sponsor: ContractAddress,
+            metadata: felt252,
+        ) {
+            let (hashed_domain, now, expiry) = self.assert_purchase_is_possible(id, domain, days);
+            self.pay_buy_domain(now, days, domain, sponsor);
+            self.emit(Event::SaleMetadata(SaleMetadata { domain, metadata }));
+            self.mint_domain(expiry, resolver, hashed_domain, id, domain);
+        }
+
+        fn transfer_domain(ref self: ContractState, domain: Span<felt252>, target_id: u128) {
+            self.assert_control_domain(domain, get_caller_address());
+
+            // Write domain owner
+            let hashed_domain = self.hash_domain(domain);
+            let current_domain_data = self._domain_data.read(hashed_domain);
+
+            // ensure target doesn't already have a domain
+            let now = get_block_timestamp();
+            self.assert_id_availability(target_id, now);
+
+            let new_domain_data = DomainData {
+                owner: target_id,
+                resolver: current_domain_data.resolver,
+                address: current_domain_data.address,
+                expiry: current_domain_data.expiry,
+                key: current_domain_data.key,
+                // no parent_domain check for root domains
+                parent_key: if domain.len() == 1 {
+                    current_domain_data.parent_key
+                } else {
+                    let hashed_parent_domain = self.hash_domain(domain.slice(1, domain.len() - 1));
+                    let next_domain_data = self._domain_data.read(hashed_parent_domain);
+                    next_domain_data.key
+                }
+            };
+
+            self._domain_data.write(hashed_domain, new_domain_data);
+            self
+                .emit(
+                    Event::DomainTransfer(
+                        DomainTransfer {
+                            domain: domain,
+                            prev_owner: current_domain_data.owner,
+                            new_owner: new_domain_data.owner
+                        }
+                    )
+                );
+
+            IIdentityDispatcher {
+                contract_address: self.starknetid_contract.read()
+            }.set_verifier_data(current_domain_data.owner, 'name', 0, 0);
+            IIdentityDispatcher {
+                contract_address: self.starknetid_contract.read()
+            }.set_verifier_data(target_id, 'name', hashed_domain, 0);
+            return;
+        }
+
+
+        // ADMIN
+
+        fn set_admin(ref self: ContractState, new_admin: ContractAddress) {
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self._admin_address.write(new_admin);
+        }
+
+        fn claim_balance(ref self: ContractState, erc20: ContractAddress) {
+            let balance = IERC20Dispatcher {
+                contract_address: erc20
+            }.balance_of(get_contract_address());
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            IERC20Dispatcher { contract_address: erc20 }.transfer(get_caller_address(), balance);
+        }
+
+        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
+            // todo: use components
+            assert(!new_class_hash.is_zero(), 'Class hash cannot be zero');
+            starknet::replace_class_syscall(new_class_hash).unwrap_syscall();
         }
     }
 
