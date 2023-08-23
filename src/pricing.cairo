@@ -66,11 +66,11 @@ mod Pricing {
             }
 
             if number_of_character == 3 {
-                return 410958904109590;
+                return 200000000000000;
             }
 
             if number_of_character == 4 {
-                return 232876712328767;
+                return 73972602739726;
             }
 
             return 24657534246575;
