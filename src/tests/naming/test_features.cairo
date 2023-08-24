@@ -58,3 +58,35 @@ fn test_subdomains() {
     // and make sure the owner has been updated
     assert(naming.domain_to_id(subdomain) == id2, 'owner not updated correctly');
 }
+
+
+#[cfg(test)]
+#[test]
+#[available_gas(2000000000)]
+fn test_claim_balance() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let caller = contract_address_const::<0x123>();
+    set_contract_address(caller);
+    let id: u128 = 1;
+    let th0rgal: felt252 = 33133781693;
+
+    //we mint an id
+    identity.mint(id);
+
+    // we check how much a domain costs
+    let (_, price) = pricing.compute_buy_price(th0rgal, 365);
+
+    // we allow the naming to take our money
+    eth.approve(naming.contract_address, price);
+
+    // we buy with no resolver, no sponsor and empty metadata
+    naming
+        .buy(id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0);
+
+    let contract_bal = eth.balance_of(naming.contract_address);
+    let admin_balance = eth.balance_of(caller);
+    assert(contract_bal == price, 'naming has wrong balance');
+    naming.claim_balance(eth.contract_address);
+    assert(admin_balance + price == eth.balance_of(caller), 'balance didn\'t increase');
+}

@@ -237,10 +237,10 @@ mod Naming {
         }
 
         fn claim_balance(ref self: ContractState, erc20: ContractAddress) {
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
             let balance = IERC20Dispatcher {
                 contract_address: erc20
             }.balance_of(get_contract_address());
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
             IERC20Dispatcher { contract_address: erc20 }.transfer(get_caller_address(), balance);
         }
 
