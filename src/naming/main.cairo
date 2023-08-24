@@ -70,8 +70,17 @@ mod Naming {
         parent_key: u32, // key of parent domain
     }
 
+    #[derive(Copy, Drop, Serde, starknet::Store)]
+    struct Discount {
+        domain_len_range: (usize, usize),
+        days_range: (u16, u16),
+        timestamp_range: (u64, u64),
+        amount: felt252, // this is an amount in percentages
+    }
+
     #[storage]
     struct Storage {
+        discounts: LegacyMap<felt252, Discount>,
         starknetid_contract: ContractAddress,
         _pricing_contract: ContractAddress,
         _referral_contract: ContractAddress,
@@ -172,10 +181,11 @@ mod Naming {
             days: u16,
             resolver: ContractAddress,
             sponsor: ContractAddress,
+            discount_id: felt252,
             metadata: felt252,
         ) {
             let (hashed_domain, now, expiry) = self.assert_purchase_is_possible(id, domain, days);
-            self.pay_buy_domain(now, days, domain, sponsor);
+            self.pay_buy_domain(now, days, domain, sponsor, discount_id);
             self.emit(Event::SaleMetadata(SaleMetadata { domain, metadata }));
             self.mint_domain(expiry, resolver, hashed_domain, id, domain);
         }
@@ -385,12 +395,32 @@ mod Naming {
         }
 
         fn pay_buy_domain(
-            self: @ContractState, now: u64, days: u16, domain: felt252, sponsor: ContractAddress
+            self: @ContractState,
+            now: u64,
+            days: u16,
+            domain: felt252,
+            sponsor: ContractAddress,
+            discount_id: felt252
         ) -> () {
+            // we need a u256 to be able to perform safe divisions
+            let domain_len = self.get_chars_len(domain.into());
+
             // find domain cost
             let (erc20, price) = IPricingDispatcher {
                 contract_address: self._pricing_contract.read()
-            }.compute_buy_price(domain, days);
+            }.compute_buy_price(domain_len, days);
+
+            // check the discount
+            if (discount_id != 0) { // let discount = self.discounts.read(discount_id);
+            // assert(
+            //     discount.days_range.0 <= days && days <= discount.days_range.1,
+            //     'days out of discount range'
+            // );
+            // assert(
+            //     discount.timestamp_range.0 <= now && now <= discount.timestamp_range.1,
+            //     'time out of discount range'
+            // );
+            }
 
             // pay the price
             IERC20Dispatcher {
@@ -439,6 +469,24 @@ mod Naming {
                         Event::DomainToResolver(DomainToResolver { domain: domain_arr, resolver })
                     );
             }
+        }
+
+        fn get_chars_len(self: @ContractState, domain: u256) -> usize {
+            if domain == (u256 { low: 0, high: 0 }) {
+                return 0;
+            }
+            // 38 = simple_alphabet_size
+            let (p, q, _) = u256_safe_divmod(domain, u256_as_non_zero(u256 { low: 38, high: 0 }));
+            if q == (u256 { low: 37, high: 0 }) {
+                // 3 = complex_alphabet_size
+                let (shifted_p, _, _) = u256_safe_divmod(
+                    p, u256_as_non_zero(u256 { low: 2, high: 0 })
+                );
+                let next = self.get_chars_len(shifted_p);
+                return 1 + next;
+            }
+            let next = self.get_chars_len(p);
+            1 + next
         }
     }
 }

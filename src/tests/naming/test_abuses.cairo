@@ -38,14 +38,16 @@ fn test_not_enough_eth() {
     identity.mint(id);
 
     // we check how much a domain costs
-    let (_, price) = pricing.compute_buy_price(th0rgal, 365);
+    let (_, price) = pricing.compute_buy_price(7, 365);
 
     // we allow the naming to take our money
     eth.approve(naming.contract_address, price);
 
-    // we buy with no resolver, no sponsor and empty metadata (and also no money)
+    // we buy with no resolver, no sponsor, no discount and empty metadata (and also no money)
     naming
-        .buy(id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0);
+        .buy(
+            id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+        );
 }
 
 
@@ -67,21 +69,21 @@ fn test_buying_domain_twice() {
     identity.mint(id2);
 
     // we check how much a domain costs
-    let (_, price) = pricing.compute_buy_price(th0rgal, 365);
+    let (_, price) = pricing.compute_buy_price(7, 365);
 
     // we allow the naming to take our money
     eth.approve(naming.contract_address, price);
 
-    // we buy with no resolver, no sponsor and empty metadata
+    // we buy with no resolver, no sponsor, no discount and empty metadata
     naming
         .buy(
-            id1, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0
+            id1, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
         );
 
     // buying again
     naming
         .buy(
-            id2, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0
+            id2, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
         );
 }
 
@@ -103,17 +105,17 @@ fn test_buying_twice_on_same_id() {
     identity.mint(id);
 
     // we check how much a domain costs
-    let (_, price) = pricing.compute_buy_price(th0rgal, 365);
+    let (_, price) = pricing.compute_buy_price(7, 365);
 
     // we allow the naming to take our money
     eth.approve(naming.contract_address, price);
 
-    // we buy with no resolver, no sponsor and empty metadata
+    // we buy with no resolver, no sponsor, no discount and empty metadata
     naming
-        .buy(id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0);
+        .buy(id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0);
     naming
         .buy(
-            id, altdomain, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0
+            id, altdomain, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
         );
 }
 

@@ -39,15 +39,21 @@ fn test_subdomains() {
     identity.mint(id1);
 
     // we check how much a domain costs
-    let (_, price) = pricing.compute_buy_price(th0rgal, 365);
+    let (_, price) = pricing.compute_buy_price(7, 365);
 
     // we allow the naming to take our money
     eth.approve(naming.contract_address, price);
 
-    // we buy with no resolver, no sponsor and empty metadata
+    // we buy with no resolver, no sponsor, no discount and empty metadata
     naming
         .buy(
-            id1, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0
+            id1,
+            th0rgal,
+            365,
+            ContractAddressZeroable::zero(),
+            ContractAddressZeroable::zero(),
+            0,
+            0
         );
 
     let subdomain = array![hello, th0rgal].span();
@@ -75,18 +81,53 @@ fn test_claim_balance() {
     identity.mint(id);
 
     // we check how much a domain costs
-    let (_, price) = pricing.compute_buy_price(th0rgal, 365);
+    let (_, price) = pricing.compute_buy_price(7, 365);
 
     // we allow the naming to take our money
     eth.approve(naming.contract_address, price);
 
-    // we buy with no resolver, no sponsor and empty metadata
+    // we buy with no resolver, no sponsor, no discount and empty metadata
     naming
-        .buy(id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0);
+        .buy(
+            id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+        );
 
     let contract_bal = eth.balance_of(naming.contract_address);
     let admin_balance = eth.balance_of(caller);
     assert(contract_bal == price, 'naming has wrong balance');
     naming.claim_balance(eth.contract_address);
     assert(admin_balance + price == eth.balance_of(caller), 'balance didn\'t increase');
+}
+
+
+#[cfg(test)]
+#[test]
+#[available_gas(200000000000)]
+fn test_get_chars_len() {
+    let mut unsafe_state = Naming::unsafe_new_contract_state();
+
+    // Should return 0 (empty string)
+    assert(Naming::InternalImpl::get_chars_len(@unsafe_state, 0) == 0, 'Should return 0');
+
+    // Should return 2 (be)
+    assert(Naming::InternalImpl::get_chars_len(@unsafe_state, 153) == 2, 'Should return 0');
+
+    // Should return 4 ("toto")
+    assert(Naming::InternalImpl::get_chars_len(@unsafe_state, 796195) == 4, 'Should return 4');
+
+    // Should return 5 ("aloha")
+    assert(Naming::InternalImpl::get_chars_len(@unsafe_state, 77554770) == 5, 'Should return 5');
+
+    // Should return 9 ("chocolate")
+    assert(
+        Naming::InternalImpl::get_chars_len(@unsafe_state, 19565965532212) == 9, 'Should return 9'
+    );
+
+    // Should return 30 ("这来abcdefghijklmopqrstuvwyq1234")
+    assert(
+        Naming::InternalImpl::get_chars_len(
+            @unsafe_state, 801855144733576077820330221438165587969903898313
+        ) == 30,
+        'Should return 30'
+    );
 }

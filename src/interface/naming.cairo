@@ -19,6 +19,7 @@ trait INaming<TContractState> {
         days: u16,
         resolver: ContractAddress,
         sponsor: ContractAddress,
+        discount_id: felt252,
         metadata: felt252,
     );
 
