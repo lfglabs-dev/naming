@@ -254,6 +254,11 @@ mod Naming {
             IERC20Dispatcher { contract_address: erc20 }.transfer(get_caller_address(), balance);
         }
 
+        fn set_discount(ref self: ContractState, discount_id: felt252, discount: Discount) {
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.discounts.write(discount_id, discount);
+        }
+
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
             // todo: use components
             assert(!new_class_hash.is_zero(), 'Class hash cannot be zero');
@@ -423,6 +428,7 @@ mod Naming {
 
                 let (min, max) = discount.timestamp_range;
                 assert(min <= now && now <= max, 'time out of discount range');
+                // discount.amount won't overflow as it's a value chosen by the admin to be in range (0, 100)
                 (price * discount.amount) / 100
             };
 

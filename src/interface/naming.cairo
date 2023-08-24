@@ -1,4 +1,5 @@
 use starknet::{ContractAddress, ClassHash};
+use naming::naming::main::Naming::Discount;
 
 #[starknet::interface]
 trait INaming<TContractState> {
@@ -29,6 +30,8 @@ trait INaming<TContractState> {
     fn set_admin(ref self: TContractState, new_admin: ContractAddress);
 
     fn claim_balance(ref self: TContractState, erc20: ContractAddress);
+
+    fn set_discount(ref self: TContractState, discount_id: felt252, discount: Discount);
 
     fn upgrade(ref self: TContractState, new_class_hash: ClassHash);
 }

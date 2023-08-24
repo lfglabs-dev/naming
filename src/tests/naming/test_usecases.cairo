@@ -19,7 +19,7 @@ use naming::pricing::Pricing;
 use super::super::identity::Identity;
 use super::super::erc20::ERC20;
 use super::common::deploy;
-
+use naming::naming::main::Naming::Discount;
 
 #[cfg(test)]
 #[test]
@@ -72,4 +72,42 @@ fn test_basic_usage() {
     let new_id = 2;
     naming.transfer_domain(domain, new_id);
     assert(naming.domain_to_id(domain) == new_id, 'owner not updated correctly');
+}
+
+
+#[cfg(test)]
+#[test]
+#[available_gas(2000000000)]
+fn test_discounts() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let caller = contract_address_const::<0x123>();
+    set_contract_address(caller);
+
+    // you pay only 50%
+    naming.set_discount('half', Discount{
+        domain_len_range: (1, 50),
+        days_range: (365, 365),
+        timestamp_range: (0, 0xffffffffffffffff),
+        amount: 50,
+    });
+
+    let id: u128 = 1;
+    let th0rgal: felt252 = 33133781693;
+
+    //we mint an id
+    identity.mint(id);
+
+    // we check how much a domain costs
+    let (_, price) = pricing.compute_buy_price(7, 365);
+    let to_pay = price/2;
+
+    // we allow the naming to take our money
+    eth.approve(naming.contract_address, to_pay);
+
+    // we buy with no resolver, no sponsor, empty metadata but our HALF discount
+    naming
+        .buy(
+            id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 'half', 0
+        );
 }
