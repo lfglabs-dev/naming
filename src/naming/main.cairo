@@ -75,7 +75,7 @@ mod Naming {
         domain_len_range: (usize, usize),
         days_range: (u16, u16),
         timestamp_range: (u64, u64),
-        amount: felt252, // this is an amount in percentages
+        amount: u256, // this is actually the amount to pay in % after discount
     }
 
     #[storage]
@@ -411,26 +411,30 @@ mod Naming {
             }.compute_buy_price(domain_len, days);
 
             // check the discount
-            if (discount_id != 0) { // let discount = self.discounts.read(discount_id);
-            // assert(
-            //     discount.days_range.0 <= days && days <= discount.days_range.1,
-            //     'days out of discount range'
-            // );
-            // assert(
-            //     discount.timestamp_range.0 <= now && now <= discount.timestamp_range.1,
-            //     'time out of discount range'
-            // );
-            }
+            let discounted_price = if (discount_id == 0) {
+                price
+            } else {
+                let discount = self.discounts.read(discount_id);
+                let (min, max) = discount.domain_len_range;
+                assert(min <= domain_len && domain_len <= max, 'invalid length for discount');
+
+                let (min, max) = discount.days_range;
+                assert(min <= days && days <= max, 'days out of discount range');
+
+                let (min, max) = discount.timestamp_range;
+                assert(min <= now && now <= max, 'time out of discount range');
+                (price * discount.amount) / 100
+            };
 
             // pay the price
             IERC20Dispatcher {
                 contract_address: erc20
-            }.transfer_from(get_caller_address(), get_contract_address(), price);
+            }.transfer_from(get_caller_address(), get_contract_address(), discounted_price);
             // add sponsor commission if eligible
             if sponsor.into() != 0 {
                 IReferralDispatcher {
                     contract_address: self._referral_contract.read()
-                }.add_commission(price, sponsor);
+                }.add_commission(discounted_price, sponsor);
             }
         }
 
