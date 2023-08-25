@@ -19,7 +19,6 @@ use naming::pricing::Pricing;
 use super::super::identity::Identity;
 use super::super::erc20::ERC20;
 
-#[cfg(test)]
 fn deploy() -> (IERC20Dispatcher, IPricingDispatcher, IIdentityDispatcher, INamingDispatcher) {
     //erc20
     let mut calldata = ArrayTrait::<felt252>::new();

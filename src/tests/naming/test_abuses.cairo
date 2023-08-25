@@ -21,7 +21,6 @@ use super::super::erc20::ERC20;
 use super::common::deploy;
 
 
-#[cfg(test)]
 #[test]
 #[available_gas(2000000000)]
 #[should_panic(expected: ('u256_sub Overflow', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED'))]
@@ -51,7 +50,6 @@ fn test_not_enough_eth() {
 }
 
 
-#[cfg(test)]
 #[test]
 #[available_gas(2000000000)]
 #[should_panic(expected: ('unexpired domain', 'ENTRYPOINT_FAILED'))]
@@ -88,7 +86,6 @@ fn test_buying_domain_twice() {
 }
 
 
-#[cfg(test)]
 #[test]
 #[available_gas(2000000000)]
 #[should_panic(expected: ('this id holds a domain', 'ENTRYPOINT_FAILED'))]
@@ -119,7 +116,6 @@ fn test_buying_twice_on_same_id() {
         );
 }
 
-#[cfg(test)]
 #[test]
 #[available_gas(2000000000)]
 #[should_panic(expected: ('you don\'t own this domain', 'ENTRYPOINT_FAILED'))]
@@ -146,7 +142,6 @@ fn test_non_owner_cannot_transfer_domain() {
     naming.transfer_domain(domain_name, id_not_owner);
 }
 
-#[cfg(test)]
 #[test]
 #[available_gas(2000000000)]
 #[should_panic(expected: ('you are not admin', 'ENTRYPOINT_FAILED'))]
@@ -161,7 +156,6 @@ fn test_non_admin_cannot_set_admin() {
     naming.set_admin(new_admin);
 }
 
-#[cfg(test)]
 #[test]
 #[available_gas(2000000000)]
 #[should_panic(expected: ('you are not admin', 'ENTRYPOINT_FAILED'))]

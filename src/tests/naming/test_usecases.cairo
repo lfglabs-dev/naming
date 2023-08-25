@@ -21,7 +21,6 @@ use super::super::erc20::ERC20;
 use super::common::deploy;
 use naming::naming::main::Naming::Discount;
 
-#[cfg(test)]
 #[test]
 #[available_gas(2000000000)]
 fn test_basic_usage() {
@@ -75,7 +74,6 @@ fn test_basic_usage() {
 }
 
 
-#[cfg(test)]
 #[test]
 #[available_gas(2000000000)]
 fn test_discounts() {

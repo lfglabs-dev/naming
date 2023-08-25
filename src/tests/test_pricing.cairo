@@ -9,7 +9,6 @@ use super::utils;
 use naming::interface::pricing::{IPricingDispatcher, IPricingDispatcherTrait};
 use naming::pricing::Pricing;
 
-#[cfg(test)]
 fn deploy_pricing() -> IPricingDispatcher {
     let mut calldata = ArrayTrait::<felt252>::new();
     // erc20 address
@@ -18,7 +17,6 @@ fn deploy_pricing() -> IPricingDispatcher {
     IPricingDispatcher { contract_address: address }
 }
 
-#[cfg(test)]
 #[test]
 #[available_gas(20000000000)]
 fn test_buy_price() {

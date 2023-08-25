@@ -21,7 +21,6 @@ use super::super::erc20::ERC20;
 use super::common::deploy;
 
 
-#[cfg(test)]
 #[test]
 #[available_gas(2000000000)]
 fn test_subdomains() {
@@ -66,7 +65,6 @@ fn test_subdomains() {
 }
 
 
-#[cfg(test)]
 #[test]
 #[available_gas(2000000000)]
 fn test_claim_balance() {
@@ -100,7 +98,6 @@ fn test_claim_balance() {
 }
 
 
-#[cfg(test)]
 #[test]
 #[available_gas(200000000000)]
 fn test_get_chars_len() {
