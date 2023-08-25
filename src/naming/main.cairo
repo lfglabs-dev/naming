@@ -115,14 +115,12 @@ mod Naming {
         fn resolve(self: @ContractState, domain: Span<felt252>, field: felt252) -> felt252 {
             let (resolver, parent_start) = self.domain_to_resolver(domain, 0);
             if (resolver != ContractAddressZeroable::zero()) {
-                IResolverDispatcher {
-                    contract_address: resolver
-                }.resolve(domain.slice(parent_start, domain.len() - parent_start), field)
+                IResolverDispatcher { contract_address: resolver }
+                    .resolve(domain.slice(parent_start, domain.len() - parent_start), field)
             } else {
                 let domain_data = self._domain_data.read(self.hash_domain(domain));
-                IIdentityDispatcher {
-                    contract_address: self.starknetid_contract.read()
-                }.get_crosschecked_user_data(domain_data.owner, field)
+                IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
+                    .get_crosschecked_user_data(domain_data.owner, field)
             }
         }
 
@@ -139,9 +137,8 @@ mod Naming {
             if data.address.into() != 0 {
                 return data.address;
             }
-            IIdentityDispatcher {
-                contract_address: self.starknetid_contract.read()
-            }.owner_of(data.owner)
+            IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
+                .owner_of(data.owner)
         }
 
         // This returns the identity (StarknetID) owning the domain
@@ -229,12 +226,10 @@ mod Naming {
                     )
                 );
 
-            IIdentityDispatcher {
-                contract_address: self.starknetid_contract.read()
-            }.set_verifier_data(current_domain_data.owner, 'name', 0, 0);
-            IIdentityDispatcher {
-                contract_address: self.starknetid_contract.read()
-            }.set_verifier_data(target_id, 'name', hashed_domain, 0);
+            IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
+                .set_verifier_data(current_domain_data.owner, 'name', 0, 0);
+            IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
+                .set_verifier_data(target_id, 'name', hashed_domain, 0);
             return;
         }
 
@@ -248,9 +243,8 @@ mod Naming {
 
         fn claim_balance(ref self: ContractState, erc20: ContractAddress) {
             assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
-            let balance = IERC20Dispatcher {
-                contract_address: erc20
-            }.balance_of(get_contract_address());
+            let balance = IERC20Dispatcher { contract_address: erc20 }
+                .balance_of(get_contract_address());
             IERC20Dispatcher { contract_address: erc20 }.transfer(get_caller_address(), balance);
         }
 
@@ -262,7 +256,7 @@ mod Naming {
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
             // todo: use components
             assert(!new_class_hash.is_zero(), 'Class hash cannot be zero');
-            starknet::replace_class_syscall(new_class_hash).unwrap_syscall();
+            starknet::replace_class_syscall(new_class_hash).unwrap();
         }
     }
 
@@ -275,7 +269,7 @@ mod Naming {
             let new_len = domain.len() - 1;
             let x = *domain[new_len];
             let y = self.hash_domain(domain.slice(0, new_len));
-            let hashed_domain = pedersen(x, y);
+            let hashed_domain = pedersen::pedersen(x, y);
             return hashed_domain;
         }
 
@@ -332,9 +326,8 @@ mod Naming {
             let owner = if data.owner == 0 {
                 ContractAddressZeroable::zero()
             } else {
-                IIdentityDispatcher {
-                    contract_address: self.starknetid_contract.read()
-                }.owner_of(data.owner)
+                IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
+                    .owner_of(data.owner)
             };
 
             // if caller owns the starknet id, he owns the domain, we return the key
@@ -359,7 +352,8 @@ mod Naming {
         fn assert_id_availability(self: @ContractState, identity: u128, timestamp: u64) {
             let id_hashed_domain = IIdentityDispatcher {
                 contract_address: self.starknetid_contract.read()
-            }.get_verifier_data(identity, 'name', get_contract_address(), 0);
+            }
+                .get_verifier_data(identity, 'name', get_contract_address(), 0);
             assert(
                 id_hashed_domain == 0
                     || self._domain_data.read(id_hashed_domain).expiry < timestamp,
@@ -413,7 +407,8 @@ mod Naming {
             // find domain cost
             let (erc20, price) = IPricingDispatcher {
                 contract_address: self._pricing_contract.read()
-            }.compute_buy_price(domain_len, days);
+            }
+                .compute_buy_price(domain_len, days);
 
             // check the discount
             let discounted_price = if (discount_id == 0) {
@@ -433,14 +428,12 @@ mod Naming {
             };
 
             // pay the price
-            IERC20Dispatcher {
-                contract_address: erc20
-            }.transfer_from(get_caller_address(), get_contract_address(), discounted_price);
+            IERC20Dispatcher { contract_address: erc20 }
+                .transfer_from(get_caller_address(), get_contract_address(), discounted_price);
             // add sponsor commission if eligible
             if sponsor.into() != 0 {
-                IReferralDispatcher {
-                    contract_address: self._referral_contract.read()
-                }.add_commission(discounted_price, sponsor);
+                IReferralDispatcher { contract_address: self._referral_contract.read() }
+                    .add_commission(discounted_price, sponsor);
             }
         }
 
@@ -470,9 +463,8 @@ mod Naming {
                     )
                 );
 
-            IIdentityDispatcher {
-                contract_address: self.starknetid_contract.read()
-            }.set_verifier_data(id, 'name', hashed_domain, 0);
+            IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
+                .set_verifier_data(id, 'name', hashed_domain, 0);
             if (resolver.into() != 0) {
                 self
                     .emit(

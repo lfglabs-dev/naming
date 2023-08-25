@@ -38,14 +38,9 @@ fn deploy() -> (IERC20Dispatcher, IPricingDispatcher, IIdentityDispatcher, INami
         Naming::TEST_CLASS_HASH, array![identity.into(), pricing.into(), 0, admin]
     );
     (
-        IERC20Dispatcher {
-            contract_address: eth
-            }, IPricingDispatcher {
-            contract_address: pricing
-            }, IIdentityDispatcher {
-            contract_address: identity
-            }, INamingDispatcher {
-            contract_address: address
-        }
+        IERC20Dispatcher { contract_address: eth },
+        IPricingDispatcher { contract_address: pricing },
+        IIdentityDispatcher { contract_address: identity },
+        INamingDispatcher { contract_address: address }
     )
 }
