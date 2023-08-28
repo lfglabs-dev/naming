@@ -254,6 +254,7 @@ mod Naming {
         }
 
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
             // todo: use components
             assert(!new_class_hash.is_zero(), 'Class hash cannot be zero');
             starknet::replace_class_syscall(new_class_hash).unwrap();
