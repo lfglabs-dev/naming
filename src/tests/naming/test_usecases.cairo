@@ -160,3 +160,43 @@ fn test_renewal() {
     naming.renew(th0rgal, 365, ContractAddressZeroable::zero(), 0, 0);
     assert(naming.domain_to_data(domain_span).expiry == 2 * 365 * 86400, 'invalid renew expiry');
 }
+
+// useful for Auto Renewal
+#[test]
+#[available_gas(2000000000)]
+fn test_non_owner_can_renew_domain() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let caller_owner = contract_address_const::<0x123>();
+    let caller_not_owner = contract_address_const::<0x456>();
+
+    set_contract_address(caller_owner);
+
+    let id_owner = 1;
+    let id_not_owner = 2;
+    let domain_name: felt252 = 33133781693; // e.g., th0rgal
+
+    // Buy for owner
+    identity.mint(id_owner);
+    let (_, price) = pricing.compute_buy_price(7, 365);
+    eth.approve(naming.contract_address, price);
+    naming
+        .buy(
+            id_owner,
+            domain_name,
+            365,
+            ContractAddressZeroable::zero(),
+            ContractAddressZeroable::zero(),
+            0,
+            0
+        );
+
+    // transfer some eth to the other renewer
+    let (_, price) = pricing.compute_renew_price(7, 365);
+    eth.transfer(caller_not_owner, price);
+
+    // Switch to non owner
+    set_contract_address(caller_not_owner);
+    eth.approve(naming.contract_address, price);
+    naming.renew(domain_name, 365, ContractAddressZeroable::zero(), 0, 0);
+}
