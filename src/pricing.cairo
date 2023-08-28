@@ -22,40 +22,46 @@ mod Pricing {
     #[external(v0)]
     impl PricingImpl of IPricing<ContractState> {
         fn compute_buy_price(
-            self: @ContractState, domain: felt252, days: u16
+            self: @ContractState, domain_len: usize, days: u16
         ) -> (ContractAddress, u256) {
-            (self.erc20.read(), u256 { low: self.get_price_per_day(domain) * days.into(), high: 0 })
+            (
+                self.erc20.read(), u256 {
+                    low: self.get_price_per_day(domain_len) * days.into(), high: 0
+                }
+            )
         }
 
         fn compute_renew_price(
-            self: @ContractState, domain: felt252, days: u16
+            self: @ContractState, domain_len: usize, days: u16
         ) -> (ContractAddress, u256) {
-            (self.erc20.read(), u256 { low: self.get_price_per_day(domain) * days.into(), high: 0 })
+            (
+                self.erc20.read(), u256 {
+                    low: self.get_price_per_day(domain_len) * days.into(), high: 0
+                }
+            )
         }
     }
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        fn get_amount_of_chars(self: @ContractState, domain: u256) -> u128 {
-            if domain == (u256 { low: 0, high: 0 }) {
-                return 0;
+        fn get_price_per_day(self: @ContractState, domain_len: usize) -> u128 {
+            if domain_len == 1 {
+                return 1068493150684932;
             }
-            // 38 = simple_alphabet_size
-            let (p, q, _) = u256_safe_divmod(domain, u256_as_non_zero(u256 { low: 38, high: 0 }));
-            if q == (u256 { low: 37, high: 0 }) {
-                // 3 = complex_alphabet_size
-                let (shifted_p, _, _) = u256_safe_divmod(
-                    p, u256_as_non_zero(u256 { low: 2, high: 0 })
-                );
-                let next = self.get_amount_of_chars(shifted_p);
-                return 1 + next;
-            }
-            let next = self.get_amount_of_chars(p);
-            1 + next
-        }
 
-        fn get_price_per_day(self: @ContractState, number_of_character: felt252) -> u128 {
-            1
+            if domain_len == 2 {
+                return 657534246575343;
+            }
+
+            if domain_len == 3 {
+                return 200000000000000;
+            }
+
+            if domain_len == 4 {
+                return 73972602739726;
+            }
+
+            return 24657534246575;
         }
     }
 }
