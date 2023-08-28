@@ -164,6 +164,58 @@ fn test_non_owner_cannot_transfer_domain() {
 
 #[test]
 #[available_gas(2000000000)]
+#[should_panic(expected: ('purchase too short', 'ENTRYPOINT_FAILED'))]
+fn test_renewal_period_too_short() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let caller = contract_address_const::<0x123>();
+    set_contract_address(caller);
+    let id: u128 = 1;
+    let th0rgal: felt252 = 33133781693;
+
+    // Mint an ID and simulate the process of buying a domain
+    identity.mint(id);
+    let (_, price) = pricing.compute_buy_price(7, 365);
+    eth.approve(naming.contract_address, price);
+    naming
+        .buy(
+            id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+        );
+
+    // Try to renew the domain for a period shorter than the allowed minimum
+    let (_, price) = pricing.compute_renew_price(7, 5 * 30);
+    eth.approve(naming.contract_address, price);
+    naming.renew(th0rgal, 5 * 30, ContractAddressZeroable::zero(), 0, 0);
+}
+
+#[test]
+#[available_gas(2000000000)]
+#[should_panic(expected: ('purchase too long', 'ENTRYPOINT_FAILED'))]
+fn test_renewal_period_too_long() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let caller = contract_address_const::<0x123>();
+    set_contract_address(caller);
+    let id: u128 = 1;
+    let th0rgal: felt252 = 33133781693;
+
+    // Mint an ID and simulate the process of buying a domain
+    identity.mint(id);
+    let (_, price) = pricing.compute_buy_price(7, 365);
+    eth.approve(naming.contract_address, price);
+    naming
+        .buy(
+            id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+        );
+
+    // Try to renew for a period that, when added to the domain's current expiry, exceeds the allowed limit.
+    let (_, price) = pricing.compute_renew_price(7, 9130);
+    eth.approve(naming.contract_address, price);
+    naming.renew(th0rgal, 9130, ContractAddressZeroable::zero(), 0, 0);
+}
+
+#[test]
+#[available_gas(2000000000)]
 #[should_panic(expected: ('you are not admin', 'ENTRYPOINT_FAILED'))]
 fn test_non_admin_cannot_set_admin() {
     // setup
