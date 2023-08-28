@@ -24,6 +24,15 @@ trait INaming<TContractState> {
         metadata: felt252,
     );
 
+    fn renew(
+        ref self: TContractState,
+        domain: felt252,
+        days: u16,
+        sponsor: ContractAddress,
+        discount_id: felt252,
+        metadata: felt252,
+    );
+
     fn transfer_domain(ref self: TContractState, domain: Span<felt252>, target_id: u128);
 
     // admin

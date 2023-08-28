@@ -25,24 +25,32 @@ mod Naming {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        DomainOwner: DomainOwner,
+        DomainMint: DomainMint,
+        DomainRenewal: DomainRenewal,
         DomainToResolver: DomainToResolver,
         DomainTransfer: DomainTransfer,
         SaleMetadata: SaleMetadata,
     }
 
     #[derive(Drop, starknet::Event)]
-    struct DomainOwner {
+    struct DomainMint {
         #[key]
-        domain: Array<felt252>,
+        domain: felt252,
         owner: u128,
         expiry: u64
     }
 
     #[derive(Drop, starknet::Event)]
+    struct DomainRenewal {
+        #[key]
+        domain: felt252,
+        new_expiry: u64,
+    }
+
+    #[derive(Drop, starknet::Event)]
     struct DomainToResolver {
         #[key]
-        domain: Array<felt252>,
+        domain: Span<felt252>,
         resolver: ContractAddress
     }
 
@@ -182,9 +190,60 @@ mod Naming {
             metadata: felt252,
         ) {
             let (hashed_domain, now, expiry) = self.assert_purchase_is_possible(id, domain, days);
-            self.pay_buy_domain(now, days, domain, sponsor, discount_id);
+            // we need a u256 to be able to perform safe divisions
+            let domain_len = self.get_chars_len(domain.into());
+            // find domain cost
+            let (erc20, price) = IPricingDispatcher {
+                contract_address: self._pricing_contract.read()
+            }
+                .compute_buy_price(domain_len, days);
+            self.pay_domain(domain_len, erc20, price, now, days, domain, sponsor, discount_id);
             self.emit(Event::SaleMetadata(SaleMetadata { domain, metadata }));
             self.mint_domain(expiry, resolver, hashed_domain, id, domain);
+        }
+
+
+        fn renew(
+            ref self: ContractState,
+            domain: felt252,
+            days: u16,
+            sponsor: ContractAddress,
+            discount_id: felt252,
+            metadata: felt252,
+        ) {
+            let now = get_block_timestamp();
+            let hashed_domain = self.hash_domain(array![domain].span());
+            let domain_data = self._domain_data.read(hashed_domain);
+
+            // we need a u256 to be able to perform safe divisions
+            let domain_len = self.get_chars_len(domain.into());
+            // find domain cost
+            let (erc20, price) = IPricingDispatcher {
+                contract_address: self._pricing_contract.read()
+            }
+                .compute_renew_price(domain_len, days);
+            self.pay_domain(domain_len, erc20, price, now, days, domain, sponsor, discount_id);
+            self.emit(Event::SaleMetadata(SaleMetadata { domain, metadata }));
+            // find new domain expiry
+            let new_expiry = if domain_data.expiry <= now {
+                now + 86400 * days.into()
+            } else {
+                domain_data.expiry + 86400 * days.into()
+            };
+            // 25*365 = 9125
+            assert(new_expiry <= now + 86400 * 9125, 'purchase too long');
+            assert(days >= 6 * 30, 'purchase too short');
+
+            let data = DomainData {
+                owner: domain_data.owner,
+                resolver: domain_data.resolver,
+                address: domain_data.address,
+                expiry: new_expiry,
+                key: domain_data.key,
+                parent_key: 0,
+            };
+            self._domain_data.write(hashed_domain, data);
+            self.emit(Event::DomainRenewal(DomainRenewal { domain, new_expiry }));
         }
 
         fn transfer_domain(ref self: ContractState, domain: Span<felt252>, target_id: u128) {
@@ -393,23 +452,17 @@ mod Naming {
             }
         }
 
-        fn pay_buy_domain(
+        fn pay_domain(
             self: @ContractState,
+            domain_len: usize,
+            erc20: ContractAddress,
+            price: u256,
             now: u64,
             days: u16,
             domain: felt252,
             sponsor: ContractAddress,
             discount_id: felt252
         ) -> () {
-            // we need a u256 to be able to perform safe divisions
-            let domain_len = self.get_chars_len(domain.into());
-
-            // find domain cost
-            let (erc20, price) = IPricingDispatcher {
-                contract_address: self._pricing_contract.read()
-            }
-                .compute_buy_price(domain_len, days);
-
             // check the discount
             let discounted_price = if (discount_id == 0) {
                 price
@@ -455,20 +508,16 @@ mod Naming {
             };
             self._hash_to_domain.write((hashed_domain, 0), hashed_domain);
             self._domain_data.write(hashed_domain, data);
-            let mut domain_arr = array![domain];
-            self
-                .emit(
-                    Event::DomainOwner(
-                        DomainOwner { domain: domain_arr.clone(), owner: id, expiry }
-                    )
-                );
+            self.emit(Event::DomainMint(DomainMint { domain, owner: id, expiry }));
 
             IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
                 .set_verifier_data(id, 'name', hashed_domain, 0);
             if (resolver.into() != 0) {
                 self
                     .emit(
-                        Event::DomainToResolver(DomainToResolver { domain: domain_arr, resolver })
+                        Event::DomainToResolver(
+                            DomainToResolver { domain: array![domain].span(), resolver }
+                        )
                     );
             }
         }

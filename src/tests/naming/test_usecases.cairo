@@ -83,12 +83,16 @@ fn test_discounts() {
     set_contract_address(caller);
 
     // you pay only 50%
-    naming.set_discount('half', Discount{
-        domain_len_range: (1, 50),
-        days_range: (365, 365),
-        timestamp_range: (0, 0xffffffffffffffff),
-        amount: 50,
-    });
+    naming
+        .set_discount(
+            'half',
+            Discount {
+                domain_len_range: (1, 50),
+                days_range: (365, 365),
+                timestamp_range: (0, 0xffffffffffffffff),
+                amount: 50,
+            }
+        );
 
     let id: u128 = 1;
     let th0rgal: felt252 = 33133781693;
@@ -98,7 +102,7 @@ fn test_discounts() {
 
     // we check how much a domain costs
     let (_, price) = pricing.compute_buy_price(7, 365);
-    let to_pay = price/2;
+    let to_pay = price / 2;
 
     // we allow the naming to take our money
     eth.approve(naming.contract_address, to_pay);
@@ -106,6 +110,48 @@ fn test_discounts() {
     // we buy with no resolver, no sponsor, empty metadata but our HALF discount
     naming
         .buy(
-            id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 'half', 0
+            id,
+            th0rgal,
+            365,
+            ContractAddressZeroable::zero(),
+            ContractAddressZeroable::zero(),
+            'half',
+            0
         );
+}
+
+
+#[test]
+#[available_gas(2000000000)]
+fn test_renewal() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let caller = contract_address_const::<0x123>();
+    set_contract_address(caller);
+    let id: u128 = 1;
+    let th0rgal: felt252 = 33133781693;
+
+    //we mint an id
+    identity.mint(id);
+
+    // we check how much a domain costs
+    let (_, price) = pricing.compute_buy_price(7, 365);
+
+    // we allow the naming to take our money
+    eth.approve(naming.contract_address, price);
+
+    // we buy with no resolver, no sponsor, no discount and empty metadata
+    naming
+        .buy(
+            id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+        );
+
+    // we check how much a domain costs to renew
+    let (_, price) = pricing.compute_renew_price(7, 365);
+
+    // we allow the naming to take our money
+    eth.approve(naming.contract_address, price);
+
+    // we renew with no sponsor, no discount and empty metadata
+    naming.renew(th0rgal, 365, ContractAddressZeroable::zero(), 0, 0);
 }
