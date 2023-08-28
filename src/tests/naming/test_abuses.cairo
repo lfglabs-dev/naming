@@ -75,13 +75,25 @@ fn test_buying_domain_twice() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     naming
         .buy(
-            id1, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+            id1,
+            th0rgal,
+            365,
+            ContractAddressZeroable::zero(),
+            ContractAddressZeroable::zero(),
+            0,
+            0
         );
 
     // buying again
     naming
         .buy(
-            id2, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+            id2,
+            th0rgal,
+            365,
+            ContractAddressZeroable::zero(),
+            ContractAddressZeroable::zero(),
+            0,
+            0
         );
 }
 
@@ -105,14 +117,22 @@ fn test_buying_twice_on_same_id() {
     let (_, price) = pricing.compute_buy_price(7, 365);
 
     // we allow the naming to take our money
-    eth.approve(naming.contract_address, price);
+    eth.approve(naming.contract_address, 2 * price);
 
     // we buy with no resolver, no sponsor, no discount and empty metadata
     naming
-        .buy(id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0);
+        .buy(
+            id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+        );
     naming
         .buy(
-            id, altdomain, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+            id,
+            altdomain,
+            365,
+            ContractAddressZeroable::zero(),
+            ContractAddressZeroable::zero(),
+            0,
+            0
         );
 }
 
@@ -140,6 +160,58 @@ fn test_non_owner_cannot_transfer_domain() {
     set_contract_address(caller_not_owner);
     identity.mint(id_not_owner);
     naming.transfer_domain(domain_name, id_not_owner);
+}
+
+#[test]
+#[available_gas(2000000000)]
+#[should_panic(expected: ('purchase too short', 'ENTRYPOINT_FAILED'))]
+fn test_renewal_period_too_short() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let caller = contract_address_const::<0x123>();
+    set_contract_address(caller);
+    let id: u128 = 1;
+    let th0rgal: felt252 = 33133781693;
+
+    // Mint an ID and simulate the process of buying a domain
+    identity.mint(id);
+    let (_, price) = pricing.compute_buy_price(7, 365);
+    eth.approve(naming.contract_address, price);
+    naming
+        .buy(
+            id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+        );
+
+    // Try to renew the domain for a period shorter than the allowed minimum
+    let (_, price) = pricing.compute_renew_price(7, 5 * 30);
+    eth.approve(naming.contract_address, price);
+    naming.renew(th0rgal, 5 * 30, ContractAddressZeroable::zero(), 0, 0);
+}
+
+#[test]
+#[available_gas(2000000000)]
+#[should_panic(expected: ('purchase too long', 'ENTRYPOINT_FAILED'))]
+fn test_renewal_period_too_long() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let caller = contract_address_const::<0x123>();
+    set_contract_address(caller);
+    let id: u128 = 1;
+    let th0rgal: felt252 = 33133781693;
+
+    // Mint an ID and simulate the process of buying a domain
+    identity.mint(id);
+    let (_, price) = pricing.compute_buy_price(7, 365);
+    eth.approve(naming.contract_address, price);
+    naming
+        .buy(
+            id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+        );
+
+    // Try to renew for a period that, when added to the domain's current expiry, exceeds the allowed limit.
+    let (_, price) = pricing.compute_renew_price(7, 9130);
+    eth.approve(naming.contract_address, price);
+    naming.renew(th0rgal, 9130, ContractAddressZeroable::zero(), 0, 0);
 }
 
 #[test]

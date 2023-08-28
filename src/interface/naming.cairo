@@ -1,10 +1,12 @@
 use starknet::{ContractAddress, ClassHash};
-use naming::naming::main::Naming::Discount;
+use naming::naming::main::Naming::{Discount, DomainData};
 
 #[starknet::interface]
 trait INaming<TContractState> {
     // view
     fn resolve(self: @TContractState, domain: Span<felt252>, field: felt252) -> felt252;
+
+    fn domain_to_data(self: @TContractState, domain: Span<felt252>) -> DomainData;
 
     fn domain_to_id(self: @TContractState, domain: Span<felt252>) -> u128;
 
@@ -19,6 +21,15 @@ trait INaming<TContractState> {
         domain: felt252,
         days: u16,
         resolver: ContractAddress,
+        sponsor: ContractAddress,
+        discount_id: felt252,
+        metadata: felt252,
+    );
+
+    fn renew(
+        ref self: TContractState,
+        domain: felt252,
+        days: u16,
         sponsor: ContractAddress,
         discount_id: felt252,
         metadata: felt252,
