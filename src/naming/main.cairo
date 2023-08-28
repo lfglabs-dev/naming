@@ -120,6 +120,7 @@ mod Naming {
         // This function allows to read the single felt target of any domain for a specific field
         // For example, it allows to find the Bitcoin address of Alice.stark by calling
         // naming.resolve(['alice'], 'bitcoin')
+        // Use it with caution in smartcontracts as it can call untrusted contracts
         fn resolve(self: @ContractState, domain: Span<felt252>, field: felt252) -> felt252 {
             let (resolver, parent_start) = self.domain_to_resolver(domain, 0);
             if (resolver != ContractAddressZeroable::zero()) {
@@ -136,6 +137,7 @@ mod Naming {
         // to be used as a parameter for other functions (for example if you want to send ERC20
         // to a .stark)
         fn domain_to_address(self: @ContractState, domain: Span<felt252>) -> ContractAddress {
+            // resolve must be performed first because it calls untrusted resolving contracts
             let resolve_result = self.resolve(domain, 'starknet');
             if resolve_result != 0 {
                 let addr: Option<ContractAddress> = resolve_result.try_into();
@@ -290,6 +292,7 @@ mod Naming {
                     )
                 );
 
+            // identity contract is trusted
             IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
                 .set_verifier_data(current_domain_data.owner, 'name', 0, 0);
             IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
