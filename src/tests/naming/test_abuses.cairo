@@ -75,13 +75,25 @@ fn test_buying_domain_twice() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     naming
         .buy(
-            id1, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+            id1,
+            th0rgal,
+            365,
+            ContractAddressZeroable::zero(),
+            ContractAddressZeroable::zero(),
+            0,
+            0
         );
 
     // buying again
     naming
         .buy(
-            id2, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+            id2,
+            th0rgal,
+            365,
+            ContractAddressZeroable::zero(),
+            ContractAddressZeroable::zero(),
+            0,
+            0
         );
 }
 
@@ -105,14 +117,22 @@ fn test_buying_twice_on_same_id() {
     let (_, price) = pricing.compute_buy_price(7, 365);
 
     // we allow the naming to take our money
-    eth.approve(naming.contract_address, price);
+    eth.approve(naming.contract_address, 2 * price);
 
     // we buy with no resolver, no sponsor, no discount and empty metadata
     naming
-        .buy(id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0);
+        .buy(
+            id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+        );
     naming
         .buy(
-            id, altdomain, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+            id,
+            altdomain,
+            365,
+            ContractAddressZeroable::zero(),
+            ContractAddressZeroable::zero(),
+            0,
+            0
         );
 }
 
