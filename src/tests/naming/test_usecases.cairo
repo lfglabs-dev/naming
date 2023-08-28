@@ -140,11 +140,15 @@ fn test_renewal() {
     // we allow the naming to take our money
     eth.approve(naming.contract_address, price);
 
+    let domain_span = array![th0rgal].span();
+    assert(naming.domain_to_data(domain_span).expiry == 0, 'non empty expiry');
+
     // we buy with no resolver, no sponsor, no discount and empty metadata
     naming
         .buy(
             id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
         );
+    assert(naming.domain_to_data(domain_span).expiry == 365 * 86400, 'invalid buy expiry');
 
     // we check how much a domain costs to renew
     let (_, price) = pricing.compute_renew_price(7, 365);
@@ -154,4 +158,5 @@ fn test_renewal() {
 
     // we renew with no sponsor, no discount and empty metadata
     naming.renew(th0rgal, 365, ContractAddressZeroable::zero(), 0, 0);
+    assert(naming.domain_to_data(domain_span).expiry == 2 * 365 * 86400, 'invalid renew expiry');
 }
