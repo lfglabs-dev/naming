@@ -230,7 +230,6 @@ mod Naming {
                 .set_verifier_data(current_domain_data.owner, 'name', 0, 0);
             IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
                 .set_verifier_data(target_id, 'name', hashed_domain, 0);
-            return;
         }
 
 
