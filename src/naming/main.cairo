@@ -149,6 +149,11 @@ mod Naming {
                 .owner_of(data.owner)
         }
 
+        // This returns the stored DomainData associated to this domain
+        fn domain_to_data(self: @ContractState, domain: Span<felt252>) -> DomainData {
+            self._domain_data.read(self.hash_domain(domain))
+        }
+
         // This returns the identity (StarknetID) owning the domain
         fn domain_to_id(self: @ContractState, domain: Span<felt252>) -> u128 {
             self._domain_data.read(self.hash_domain(domain)).owner
