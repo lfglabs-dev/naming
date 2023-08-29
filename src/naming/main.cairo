@@ -29,6 +29,7 @@ mod Naming {
         DomainRenewal: DomainRenewal,
         DomainToResolver: DomainToResolver,
         DomainTransfer: DomainTransfer,
+        SubdomainsReset: SubdomainsReset,
         SaleMetadata: SaleMetadata,
     }
 
@@ -60,6 +61,12 @@ mod Naming {
         domain: Span<felt252>,
         prev_owner: u128,
         new_owner: u128
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct SubdomainsReset {
+        #[key]
+        domain: Span<felt252>,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -299,6 +306,21 @@ mod Naming {
                 .set_verifier_data(target_id, 'name', hashed_domain, 0);
         }
 
+        fn reset_subdomains(ref self: ContractState, domain: Span<felt252>) {
+            self.assert_control_domain(domain, get_caller_address());
+            let hashed_domain = self.hash_domain(domain);
+            let current_domain_data = self._domain_data.read(hashed_domain);
+            let new_domain_data = DomainData {
+                owner: current_domain_data.owner,
+                resolver: current_domain_data.resolver,
+                address: current_domain_data.address,
+                expiry: current_domain_data.expiry,
+                key: current_domain_data.key + 1,
+                parent_key: current_domain_data.parent_key,
+            };
+            self._domain_data.write(hashed_domain, new_domain_data);
+            self.emit(Event::SubdomainsReset(SubdomainsReset { domain: domain, }));
+        }
 
         // ADMIN
 
