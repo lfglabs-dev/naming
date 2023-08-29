@@ -135,8 +135,25 @@ mod Naming {
                     .resolve(domain.slice(parent_start, domain.len() - parent_start), field)
             } else {
                 let domain_data = self._domain_data.read(self.hash_domain(domain));
-                IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
-                    .get_crosschecked_user_data(domain_data.owner, field)
+                // circuit breaker for root domain
+                if (domain.len() == 1) {
+                    IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
+                        .get_crosschecked_user_data(domain_data.owner, field)
+                // handle reset subdomains
+                } else {
+                    // todo: optimize by changing the hash definition from H(b, a) to H(a, b)
+                    let parent_key = self
+                        ._domain_data
+                        .read(self.hash_domain(domain.slice(1, domain.len() - 1)))
+                        .key;
+
+                    if parent_key == domain_data.parent_key {
+                        IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
+                            .get_crosschecked_user_data(domain_data.owner, field)
+                    } else {
+                        0
+                    }
+                }
             }
         }
 
@@ -152,10 +169,19 @@ mod Naming {
             }
             let data = self._domain_data.read(self.hash_domain(domain));
             if data.address.into() != 0 {
+                if domain.len() != 1 {
+                    let parent_key = self
+                        ._domain_data
+                        .read(self.hash_domain(domain.slice(1, domain.len() - 1)))
+                        .key;
+                    if parent_key == data.parent_key {
+                        return data.address;
+                    }
+                }
                 return data.address;
             }
             IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
-                .owner_of(data.owner)
+                .owner_of(self.domain_to_id(domain))
         }
 
         // This returns the stored DomainData associated to this domain
@@ -165,7 +191,17 @@ mod Naming {
 
         // This returns the identity (StarknetID) owning the domain
         fn domain_to_id(self: @ContractState, domain: Span<felt252>) -> u128 {
-            self._domain_data.read(self.hash_domain(domain)).owner
+            let data = self._domain_data.read(self.hash_domain(domain));
+            if domain.len() != 1 {
+                let parent_key = self
+                    ._domain_data
+                    .read(self.hash_domain(domain.slice(1, domain.len() - 1)))
+                    .key;
+                if parent_key != data.parent_key {
+                    return 0;
+                }
+            }
+            data.owner
         }
 
         // This function allows to find which domain to use to display an account
@@ -361,6 +397,7 @@ mod Naming {
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
+        // hash(alpha.bravo.stark) = pedersen(bravo, pedersen(alpha, 0))
         fn hash_domain(self: @ContractState, domain: Span<felt252>) -> felt252 {
             if domain.len() == 0 {
                 return 0;
