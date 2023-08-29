@@ -319,6 +319,16 @@ mod Naming {
             self.discounts.write(discount_id, discount);
         }
 
+        fn set_pricing_contract(ref self: ContractState, pricing_contract: ContractAddress) {
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self._pricing_contract.write(pricing_contract);
+        }
+
+        fn set_referral_contract(ref self: ContractState, referral_contract: ContractAddress) {
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self._referral_contract.write(referral_contract);
+        }
+
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
             assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
             // todo: use components

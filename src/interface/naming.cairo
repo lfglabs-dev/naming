@@ -44,5 +44,9 @@ trait INaming<TContractState> {
 
     fn set_discount(ref self: TContractState, discount_id: felt252, discount: Discount);
 
+    fn set_pricing_contract(ref self: TContractState, pricing_contract: ContractAddress);
+
+    fn set_referral_contract(ref self: TContractState, referral_contract: ContractAddress);
+
     fn upgrade(ref self: TContractState, new_class_hash: ClassHash);
 }
