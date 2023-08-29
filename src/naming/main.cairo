@@ -1,26 +1,27 @@
 #[starknet::contract]
 mod Naming {
-    use option::OptionTrait;
-    use starknet::ContractAddress;
-    use starknet::contract_address::ContractAddressZeroable;
-    use starknet::{get_caller_address, get_contract_address, get_block_timestamp};
     use traits::{Into, TryInto};
-    use array::{ArrayTrait, SpanTrait};
-    use zeroable::Zeroable;
-    use starknet::class_hash::ClassHash;
+    use option::OptionTrait;
+    use array::{ArrayTrait, SpanTrait, ArrayTCloneImpl};
     use integer::{u256_safe_divmod, u256_as_non_zero};
+    use zeroable::Zeroable;
     use core::pedersen;
-    use naming::interface::{
-        naming::{INaming, INamingDispatcher, INamingDispatcherTrait},
-        resolver::{IResolver, IResolverDispatcher, IResolverDispatcherTrait},
-        pricing::{IPricing, IPricingDispatcher, IPricingDispatcherTrait},
-        referral::{IReferral, IReferralDispatcher, IReferralDispatcherTrait},
-    };
     use clone::Clone;
-    use array::ArrayTCloneImpl;
+    use starknet::{
+        ContractAddress, contract_address::ContractAddressZeroable, get_caller_address,
+        get_contract_address, get_block_timestamp, class_hash::ClassHash
+    };
     use identity::interface::identity::{IIdentity, IIdentityDispatcher, IIdentityDispatcherTrait};
     use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
-    use debug::PrintTrait;
+    use naming::{
+        interface::{
+            naming::{INaming, INamingDispatcher, INamingDispatcherTrait},
+            resolver::{IResolver, IResolverDispatcher, IResolverDispatcherTrait},
+            pricing::{IPricing, IPricingDispatcher, IPricingDispatcherTrait},
+            referral::{IReferral, IReferralDispatcher, IReferralDispatcherTrait},
+        },
+        naming::events::{DomainMint, DomainRenewal, DomainToResolver, DomainTransfer, SaleMetadata}
+    };
 
     #[event]
     #[derive(Drop, starknet::Event)]
@@ -32,41 +33,6 @@ mod Naming {
         SaleMetadata: SaleMetadata,
     }
 
-    #[derive(Drop, starknet::Event)]
-    struct DomainMint {
-        #[key]
-        domain: felt252,
-        owner: u128,
-        expiry: u64
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct DomainRenewal {
-        #[key]
-        domain: felt252,
-        new_expiry: u64,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct DomainToResolver {
-        #[key]
-        domain: Span<felt252>,
-        resolver: ContractAddress
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct DomainTransfer {
-        #[key]
-        domain: Span<felt252>,
-        prev_owner: u128,
-        new_owner: u128
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct SaleMetadata {
-        domain: felt252,
-        metadata: felt252
-    }
 
     #[derive(Copy, Drop, Serde, starknet::Store)]
     struct DomainData {
