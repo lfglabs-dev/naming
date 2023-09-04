@@ -37,12 +37,18 @@ trait INaming<TContractState> {
 
     fn transfer_domain(ref self: TContractState, domain: Span<felt252>, target_id: u128);
 
+    fn reset_subdomains(ref self: TContractState, domain: Span<felt252>);
+
     // admin
     fn set_admin(ref self: TContractState, new_admin: ContractAddress);
 
     fn claim_balance(ref self: TContractState, erc20: ContractAddress);
 
     fn set_discount(ref self: TContractState, discount_id: felt252, discount: Discount);
+
+    fn set_pricing_contract(ref self: TContractState, pricing_contract: ContractAddress);
+
+    fn set_referral_contract(ref self: TContractState, referral_contract: ContractAddress);
 
     fn upgrade(ref self: TContractState, new_class_hash: ClassHash);
 }

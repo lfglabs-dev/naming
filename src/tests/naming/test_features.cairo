@@ -32,10 +32,10 @@ fn test_subdomains() {
     let id2: u128 = 2;
     let th0rgal: felt252 = 33133781693;
     let hello: felt252 = 29811539;
-    let altdomain: felt252 = 57437602667574;
 
-    //we mint an id
+    //we mint the ids id
     identity.mint(id1);
+    identity.mint(id2);
 
     // we check how much a domain costs
     let (_, price) = pricing.compute_buy_price(7, 365);
@@ -60,10 +60,25 @@ fn test_subdomains() {
     // we transfer hello.th0rgal.stark to id2
     naming.transfer_domain(subdomain, id2);
 
+    assert(naming.domain_to_address(subdomain) == caller, 'wrong subdomain initial target');
+
     // and make sure the owner has been updated
     assert(naming.domain_to_id(subdomain) == id2, 'owner not updated correctly');
-}
 
+    let root_domain = array![th0rgal].span();
+
+    // we reset subdomains
+    naming.reset_subdomains(root_domain);
+
+    // ensure th0rgal still resolves
+    assert(naming.domain_to_id(root_domain) == id1, 'owner not updated correctly');
+
+    // ensure the subdomain was reset
+    assert(
+        naming.domain_to_address(subdomain) == ContractAddressZeroable::zero(),
+        'target not updated correctly'
+    );
+}
 
 #[test]
 #[available_gas(2000000000)]

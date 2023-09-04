@@ -29,6 +29,7 @@ mod Naming {
         DomainRenewal: DomainRenewal,
         DomainToResolver: DomainToResolver,
         DomainTransfer: DomainTransfer,
+        SubdomainsReset: SubdomainsReset,
         SaleMetadata: SaleMetadata,
     }
 
@@ -60,6 +61,12 @@ mod Naming {
         domain: Span<felt252>,
         prev_owner: u128,
         new_owner: u128
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct SubdomainsReset {
+        #[key]
+        domain: Span<felt252>,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -128,8 +135,25 @@ mod Naming {
                     .resolve(domain.slice(parent_start, domain.len() - parent_start), field)
             } else {
                 let domain_data = self._domain_data.read(self.hash_domain(domain));
-                IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
-                    .get_crosschecked_user_data(domain_data.owner, field)
+                // circuit breaker for root domain
+                if (domain.len() == 1) {
+                    IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
+                        .get_crosschecked_user_data(domain_data.owner, field)
+                // handle reset subdomains
+                } else {
+                    // todo: optimize by changing the hash definition from H(b, a) to H(a, b)
+                    let parent_key = self
+                        ._domain_data
+                        .read(self.hash_domain(domain.slice(1, domain.len() - 1)))
+                        .key;
+
+                    if parent_key == domain_data.parent_key {
+                        IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
+                            .get_crosschecked_user_data(domain_data.owner, field)
+                    } else {
+                        0
+                    }
+                }
             }
         }
 
@@ -145,10 +169,19 @@ mod Naming {
             }
             let data = self._domain_data.read(self.hash_domain(domain));
             if data.address.into() != 0 {
+                if domain.len() != 1 {
+                    let parent_key = self
+                        ._domain_data
+                        .read(self.hash_domain(domain.slice(1, domain.len() - 1)))
+                        .key;
+                    if parent_key == data.parent_key {
+                        return data.address;
+                    }
+                }
                 return data.address;
             }
             IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
-                .owner_of(data.owner)
+                .owner_of(self.domain_to_id(domain))
         }
 
         // This returns the stored DomainData associated to this domain
@@ -158,7 +191,17 @@ mod Naming {
 
         // This returns the identity (StarknetID) owning the domain
         fn domain_to_id(self: @ContractState, domain: Span<felt252>) -> u128 {
-            self._domain_data.read(self.hash_domain(domain)).owner
+            let data = self._domain_data.read(self.hash_domain(domain));
+            if domain.len() != 1 {
+                let parent_key = self
+                    ._domain_data
+                    .read(self.hash_domain(domain.slice(1, domain.len() - 1)))
+                    .key;
+                if parent_key != data.parent_key {
+                    return 0;
+                }
+            }
+            data.owner
         }
 
         // This function allows to find which domain to use to display an account
@@ -299,6 +342,21 @@ mod Naming {
                 .set_verifier_data(target_id, 'name', hashed_domain, 0);
         }
 
+        fn reset_subdomains(ref self: ContractState, domain: Span<felt252>) {
+            self.assert_control_domain(domain, get_caller_address());
+            let hashed_domain = self.hash_domain(domain);
+            let current_domain_data = self._domain_data.read(hashed_domain);
+            let new_domain_data = DomainData {
+                owner: current_domain_data.owner,
+                resolver: current_domain_data.resolver,
+                address: current_domain_data.address,
+                expiry: current_domain_data.expiry,
+                key: current_domain_data.key + 1,
+                parent_key: current_domain_data.parent_key,
+            };
+            self._domain_data.write(hashed_domain, new_domain_data);
+            self.emit(Event::SubdomainsReset(SubdomainsReset { domain: domain, }));
+        }
 
         // ADMIN
 
@@ -319,6 +377,16 @@ mod Naming {
             self.discounts.write(discount_id, discount);
         }
 
+        fn set_pricing_contract(ref self: ContractState, pricing_contract: ContractAddress) {
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self._pricing_contract.write(pricing_contract);
+        }
+
+        fn set_referral_contract(ref self: ContractState, referral_contract: ContractAddress) {
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self._referral_contract.write(referral_contract);
+        }
+
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
             assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
             // todo: use components
@@ -329,6 +397,7 @@ mod Naming {
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
+        // hash(alpha.bravo.stark) = pedersen(bravo, pedersen(alpha, 0))
         fn hash_domain(self: @ContractState, domain: Span<felt252>) -> felt252 {
             if domain.len() == 0 {
                 return 0;
