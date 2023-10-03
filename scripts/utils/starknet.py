@@ -191,7 +191,6 @@ async def deploy_v2(contract_name, *args):
         cairo_version=1,
         max_fee=int(1e17),
     )
-
     await deploy_result.wait_for_acceptance()
 
     logger.info(
