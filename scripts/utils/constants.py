@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from starknet_py.net.gateway_client import GatewayClient
+from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.net.models.chains import StarknetChainId
 
 logging.basicConfig()
@@ -14,13 +14,13 @@ load_dotenv()
 NETWORKS = {
     "mainnet": {
         "name": "mainnet",
+        "explorer_url": "https://voyager.online",
         "feeder_gateway_url": "https://alpha-mainnet.starknet.io/feeder_gateway",
         "gateway_url": "https://alpha-mainnet.starknet.io/gateway",
     },
     "testnet": {
         "name": "testnet",
-        "explorer_url": "https://testnet.starkscan.co",
-        "rpc_url": f"https://starknet-goerli.infura.io/v3/{os.getenv('INFURA_KEY')}",
+        "explorer_url": "https://goerli.voyager.online",
         "feeder_gateway_url": "https://alpha4.starknet.io/feeder_gateway",
         "gateway_url": "https://alpha4.starknet.io/gateway",
     },
@@ -34,9 +34,7 @@ NETWORKS = {
 }
 
 VARS = NETWORKS[os.getenv("STARKNET_NETWORK", "devnet")]
-VARS["account_address"] = os.environ.get(
-    f"{VARS['name'].upper()}_ACCOUNT_ADDRESS"
-)
+VARS["account_address"] = os.environ.get(f"{VARS['name'].upper()}_ACCOUNT_ADDRESS")
 if VARS["account_address"] is None:
     logger.warning(
         f"⚠️ {VARS['name'].upper()}_ACCOUNT_ADDRESS not set, defaulting to ACCOUNT_ADDRESS"
@@ -49,21 +47,22 @@ if VARS["private_key"] is None:
     )
     VARS["private_key"] = os.getenv("PRIVATE_KEY")
 if VARS["name"] == "mainnet":
+    VARS["rpc_url"] = os.getenv("MAINNET_RPC_URL")
     VARS["chain_id"] = StarknetChainId.MAINNET
 elif VARS["name"] == "testnet2":
-    StarknetChainId.TESTNET2
-else:
+    VARS["rpc_url"] = os.getenv("TESTNET2_RPC_URL")
+    VARS["chain_id"] = StarknetChainId.TESTNET2
+elif VARS["name"] != "devnet":
+    VARS["rpc_url"] = os.getenv("TESTNET_RPC_URL")
     VARS["chain_id"] = StarknetChainId.TESTNET
 
-GATEWAY_CLIENT = GatewayClient(
-    net={
-        "feeder_gateway_url": VARS["feeder_gateway_url"],
-        "gateway_url": VARS["gateway_url"],
-    }
+FULL_NODE_CLIENT = FullNodeClient(
+    node_url=VARS["rpc_url"],
+    net=VARS["feeder_gateway_url"],
 )
 
 ETH_TOKEN_ADDRESS = 0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7
-ETH_CLASS_HASH = 0x6a22bf63c7bc07effa39a25dfbd21523d211db0100a0afd054d172b81840eaf
+ETH_CLASS_HASH = 0x6A22BF63C7BC07EFFA39A25DFBD21523D211DB0100A0AFD054D172B81840EAF
 SOURCE_DIR = Path("src")
 CONTRACTS = {p.stem: p for p in list(SOURCE_DIR.glob("**/*.cairo"))}
 
