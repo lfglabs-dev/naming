@@ -19,6 +19,8 @@ casm = true
 # Emit Python-powered hints in order to run compiled CASM class with legacy Cairo VM.
 casm-add-pythonic-hints = true
 
+build-external-contracts = ["identity::identity::main::Identity"]
+
 [lib]
-sierra = true 
+sierra = true
 casm = false
