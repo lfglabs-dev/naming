@@ -19,7 +19,9 @@ mod Naming {
     use clone::Clone;
     use array::ArrayTCloneImpl;
     use identity::interface::identity::{IIdentity, IIdentityDispatcher, IIdentityDispatcherTrait};
-    use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
+    use openzeppelin::token::erc20::interface::{
+        IERC20Camel, IERC20CamelDispatcher, IERC20CamelDispatcherTrait
+    };
     use debug::PrintTrait;
 
     #[event]
@@ -367,9 +369,10 @@ mod Naming {
 
         fn claim_balance(ref self: ContractState, erc20: ContractAddress) {
             assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
-            let balance = IERC20Dispatcher { contract_address: erc20 }
-                .balance_of(get_contract_address());
-            IERC20Dispatcher { contract_address: erc20 }.transfer(get_caller_address(), balance);
+            let balance = IERC20CamelDispatcher { contract_address: erc20 }
+                .balanceOf(get_contract_address());
+            IERC20CamelDispatcher { contract_address: erc20 }
+                .transfer(get_caller_address(), balance);
         }
 
         fn set_discount(ref self: ContractState, discount_id: felt252, discount: Discount) {
@@ -558,8 +561,8 @@ mod Naming {
             };
 
             // pay the price
-            IERC20Dispatcher { contract_address: erc20 }
-                .transfer_from(get_caller_address(), get_contract_address(), discounted_price);
+            IERC20CamelDispatcher { contract_address: erc20 }
+                .transferFrom(get_caller_address(), get_contract_address(), discounted_price);
             // add sponsor commission if eligible
             if sponsor.into() != 0 {
                 IReferralDispatcher { contract_address: self._referral_contract.read() }
