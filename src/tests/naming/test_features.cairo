@@ -10,13 +10,16 @@ use starknet::contract_address::ContractAddressZeroable;
 use starknet::contract_address_const;
 use starknet::testing::set_contract_address;
 use super::super::utils;
-use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
-use identity::{identity::main::Identity, interface::identity::{IIdentityDispatcher, IIdentityDispatcherTrait}};
+use openzeppelin::token::erc20::{
+    erc20::ERC20, interface::{IERC20Camel, IERC20CamelDispatcher, IERC20CamelDispatcherTrait}
+};
+use identity::{
+    identity::main::Identity, interface::identity::{IIdentityDispatcher, IIdentityDispatcherTrait}
+};
 use naming::interface::naming::{INamingDispatcher, INamingDispatcherTrait};
 use naming::interface::pricing::{IPricingDispatcher, IPricingDispatcherTrait};
 use naming::naming::main::Naming;
 use naming::pricing::Pricing;
-use super::super::erc20::ERC20;
 use super::common::deploy;
 
 
@@ -104,11 +107,11 @@ fn test_claim_balance() {
             id, th0rgal, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
         );
 
-    let contract_bal = eth.balance_of(naming.contract_address);
-    let admin_balance = eth.balance_of(caller);
+    let contract_bal = eth.balanceOf(naming.contract_address);
+    let admin_balance = eth.balanceOf(caller);
     assert(contract_bal == price, 'naming has wrong balance');
     naming.claim_balance(eth.contract_address);
-    assert(admin_balance + price == eth.balance_of(caller), 'balance didn\'t increase');
+    assert(admin_balance + price == eth.balanceOf(caller), 'balance didn\'t increase');
 }
 
 

@@ -10,15 +10,18 @@ use starknet::contract_address::ContractAddressZeroable;
 use starknet::contract_address_const;
 use starknet::testing::set_contract_address;
 use super::super::utils;
-use openzeppelin::token::erc20::interface::{IERC20, IERC20Dispatcher, IERC20DispatcherTrait};
-use identity::{identity::main::Identity, interface::identity::{IIdentityDispatcher, IIdentityDispatcherTrait}};
+use openzeppelin::token::erc20::{
+    erc20::ERC20, interface::{IERC20Camel, IERC20CamelDispatcher, IERC20CamelDispatcherTrait}
+};
+use identity::{
+    identity::main::Identity, interface::identity::{IIdentityDispatcher, IIdentityDispatcherTrait}
+};
 use naming::interface::naming::{INamingDispatcher, INamingDispatcherTrait};
 use naming::interface::pricing::{IPricingDispatcher, IPricingDispatcherTrait};
 use naming::naming::main::Naming;
 use naming::pricing::Pricing;
-use super::super::erc20::ERC20;
 
-fn deploy() -> (IERC20Dispatcher, IPricingDispatcher, IIdentityDispatcher, INamingDispatcher) {
+fn deploy() -> (IERC20CamelDispatcher, IPricingDispatcher, IIdentityDispatcher, INamingDispatcher) {
     //erc20
     let mut calldata = ArrayTrait::<felt252>::new();
     // 0, 1 = low and high of ETH supply
@@ -36,7 +39,7 @@ fn deploy() -> (IERC20Dispatcher, IPricingDispatcher, IIdentityDispatcher, INami
         Naming::TEST_CLASS_HASH, array![identity.into(), pricing.into(), 0, admin]
     );
     (
-        IERC20Dispatcher { contract_address: eth },
+        IERC20CamelDispatcher { contract_address: eth },
         IPricingDispatcher { contract_address: pricing },
         IIdentityDispatcher { contract_address: identity },
         INamingDispatcher { contract_address: address }
