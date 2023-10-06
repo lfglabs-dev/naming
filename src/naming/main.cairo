@@ -29,7 +29,8 @@ mod Naming {
     enum Event {
         DomainMint: DomainMint,
         DomainRenewal: DomainRenewal,
-        DomainToResolver: DomainToResolver,
+        DomainResolverUpdate: DomainResolverUpdate,
+        AddressToDomainUpdate: AddressToDomainUpdate,
         DomainTransfer: DomainTransfer,
         SubdomainsReset: SubdomainsReset,
         SaleMetadata: SaleMetadata,
@@ -51,10 +52,17 @@ mod Naming {
     }
 
     #[derive(Drop, starknet::Event)]
-    struct DomainToResolver {
+    struct DomainResolverUpdate {
         #[key]
         domain: Span<felt252>,
         resolver: ContractAddress
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct AddressToDomainUpdate {
+        #[key]
+        address: ContractAddress,
+        domain: Span<felt252>,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -360,6 +368,14 @@ mod Naming {
             self.emit(Event::SubdomainsReset(SubdomainsReset { domain: domain, }));
         }
 
+
+        fn set_address_to_domain(ref self: ContractState, domain: Span<felt252>) {
+            let address = get_caller_address();
+            assert(self.domain_to_address(domain) == address, 'domain not pointing back');
+            self.emit(Event::AddressToDomainUpdate(AddressToDomainUpdate { address, domain }));
+            self.set_address_to_domain_util(address, domain);
+        }
+
         // ADMIN
 
         fn set_admin(ref self: ContractState, new_admin: ContractAddress) {
@@ -512,6 +528,20 @@ mod Naming {
             }
         }
 
+        fn set_address_to_domain_util(
+            ref self: ContractState, address: ContractAddress, mut domain: Span<felt252>
+        ) {
+            match domain.pop_back() {
+                Option::Some(domain_part) => {
+                    self._address_to_domain.write((address, domain.len()), *domain_part);
+                    return self.set_address_to_domain_util(address, domain);
+                },
+                Option::None => {
+                    return;
+                }
+            }
+        }
+
         fn domain_to_resolver(
             self: @ContractState, domain: Span<felt252>, parent_start_id: u32
         ) -> (ContractAddress, u32) {
@@ -597,8 +627,8 @@ mod Naming {
             if (resolver.into() != 0) {
                 self
                     .emit(
-                        Event::DomainToResolver(
-                            DomainToResolver { domain: array![domain].span(), resolver }
+                        Event::DomainResolverUpdate(
+                            DomainResolverUpdate { domain: array![domain].span(), resolver }
                         )
                     );
             }

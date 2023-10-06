@@ -39,6 +39,8 @@ trait INaming<TContractState> {
 
     fn reset_subdomains(ref self: TContractState, domain: Span<felt252>);
 
+    fn set_address_to_domain(ref self: TContractState, domain: Span<felt252>);
+
     // admin
     fn set_admin(ref self: TContractState, new_admin: ContractAddress);
 
