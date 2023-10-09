@@ -9,7 +9,6 @@ use starknet::ContractAddress;
 use starknet::contract_address::ContractAddressZeroable;
 use starknet::contract_address_const;
 use starknet::testing::set_contract_address;
-use super::super::utils;
 use openzeppelin::token::erc20::{
     erc20::ERC20, interface::{IERC20Camel, IERC20CamelDispatcher, IERC20CamelDispatcherTrait}
 };
@@ -20,7 +19,9 @@ use naming::interface::naming::{INamingDispatcher, INamingDispatcherTrait};
 use naming::interface::pricing::{IPricingDispatcher, IPricingDispatcherTrait};
 use naming::naming::main::Naming;
 use naming::pricing::Pricing;
+use naming::naming::utils::UtilsImpl;
 use super::common::deploy;
+use super::super::utils;
 
 
 #[test]
@@ -121,25 +122,23 @@ fn test_get_chars_len() {
     let mut unsafe_state = Naming::unsafe_new_contract_state();
 
     // Should return 0 (empty string)
-    assert(Naming::InternalImpl::get_chars_len(@unsafe_state, 0) == 0, 'Should return 0');
+    assert(UtilsImpl::get_chars_len(@unsafe_state, 0) == 0, 'Should return 0');
 
     // Should return 2 (be)
-    assert(Naming::InternalImpl::get_chars_len(@unsafe_state, 153) == 2, 'Should return 0');
+    assert(UtilsImpl::get_chars_len(@unsafe_state, 153) == 2, 'Should return 0');
 
     // Should return 4 ("toto")
-    assert(Naming::InternalImpl::get_chars_len(@unsafe_state, 796195) == 4, 'Should return 4');
+    assert(UtilsImpl::get_chars_len(@unsafe_state, 796195) == 4, 'Should return 4');
 
     // Should return 5 ("aloha")
-    assert(Naming::InternalImpl::get_chars_len(@unsafe_state, 77554770) == 5, 'Should return 5');
+    assert(UtilsImpl::get_chars_len(@unsafe_state, 77554770) == 5, 'Should return 5');
 
     // Should return 9 ("chocolate")
-    assert(
-        Naming::InternalImpl::get_chars_len(@unsafe_state, 19565965532212) == 9, 'Should return 9'
-    );
+    assert(UtilsImpl::get_chars_len(@unsafe_state, 19565965532212) == 9, 'Should return 9');
 
     // Should return 30 ("这来abcdefghijklmopqrstuvwyq1234")
     assert(
-        Naming::InternalImpl::get_chars_len(
+        UtilsImpl::get_chars_len(
             @unsafe_state, 801855144733576077820330221438165587969903898313
         ) == 30,
         'Should return 30'
