@@ -4,13 +4,17 @@ use naming::naming::main::Naming::{Discount, DomainData};
 #[starknet::interface]
 trait INaming<TContractState> {
     // view
-    fn resolve(self: @TContractState, domain: Span<felt252>, field: felt252) -> felt252;
+    fn resolve(
+        self: @TContractState, domain: Span<felt252>, field: felt252, hint: Span<felt252>
+    ) -> felt252;
 
     fn domain_to_data(self: @TContractState, domain: Span<felt252>) -> DomainData;
 
     fn domain_to_id(self: @TContractState, domain: Span<felt252>) -> u128;
 
-    fn domain_to_address(self: @TContractState, domain: Span<felt252>) -> ContractAddress;
+    fn domain_to_address(
+        self: @TContractState, domain: Span<felt252>, hint: Span<felt252>
+    ) -> ContractAddress;
 
     fn address_to_domain(self: @TContractState, address: ContractAddress) -> Array<felt252>;
 

@@ -51,9 +51,9 @@ fn test_basic_usage() {
     // let's try the resolving
     let domain = array![th0rgal].span();
     // by default we should have nothing written
-    assert(naming.resolve(domain, 'starknet') == 0, 'non empty starknet field');
+    assert(naming.resolve(domain, 'starknet', array![].span()) == 0, 'non empty starknet field');
     // so it should resolve to the starknetid owner
-    assert(naming.domain_to_address(domain) == caller, 'wrong domain target');
+    assert(naming.domain_to_address(domain, array![].span()) == caller, 'wrong domain target');
 
     // let's try reverse resolving
     identity.set_main_id(id);
@@ -65,9 +65,12 @@ fn test_basic_usage() {
     identity.set_user_data(id, 'starknet', new_target.into(), 0);
 
     // now we should have nothing written
-    assert(naming.resolve(domain, 'starknet') == new_target.into(), 'wrong starknet field');
+    assert(
+        naming.resolve(domain, 'starknet', array![].span()) == new_target.into(),
+        'wrong starknet field'
+    );
     // and it should resolve to the new domain target
-    assert(naming.domain_to_address(domain) == new_target, 'wrong domain target');
+    assert(naming.domain_to_address(domain, array![].span()) == new_target, 'wrong domain target');
 
     // testing ownership transfer
     let new_id = 2;

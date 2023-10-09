@@ -130,11 +130,13 @@ mod Naming {
         // For example, it allows to find the Bitcoin address of Alice.stark by calling
         // naming.resolve(['alice'], 'bitcoin')
         // Use it with caution in smartcontracts as it can call untrusted contracts
-        fn resolve(self: @ContractState, domain: Span<felt252>, field: felt252) -> felt252 {
+        fn resolve(
+            self: @ContractState, domain: Span<felt252>, field: felt252, hint: Span<felt252>
+        ) -> felt252 {
             let (resolver, parent_start) = self.domain_to_resolver(domain, 0);
             if (resolver != ContractAddressZeroable::zero()) {
                 IResolverDispatcher { contract_address: resolver }
-                    .resolve(domain.slice(parent_start, domain.len() - parent_start), field)
+                    .resolve(domain.slice(parent_start, domain.len() - parent_start), field, hint)
             } else {
                 let domain_data = self._domain_data.read(self.hash_domain(domain));
                 // circuit breaker for root domain
@@ -162,9 +164,11 @@ mod Naming {
         // This functions allows to resolve a domain to a native address. Its output is designed
         // to be used as a parameter for other functions (for example if you want to send ERC20
         // to a .stark)
-        fn domain_to_address(self: @ContractState, domain: Span<felt252>) -> ContractAddress {
+        fn domain_to_address(
+            self: @ContractState, domain: Span<felt252>, hint: Span<felt252>
+        ) -> ContractAddress {
             // resolve must be performed first because it calls untrusted resolving contracts
-            let resolve_result = self.resolve(domain, 'starknet');
+            let resolve_result = self.resolve(domain, 'starknet', hint);
             if resolve_result != 0 {
                 let addr: Option<ContractAddress> = resolve_result.try_into();
                 return addr.unwrap();
@@ -210,7 +214,8 @@ mod Naming {
         fn address_to_domain(self: @ContractState, address: ContractAddress) -> Array<felt252> {
             let mut domain = ArrayTrait::new();
             self._address_to_domain_util(address, ref domain);
-            if domain.len() != 0 && self.domain_to_address(domain.span()) == address {
+            if domain.len() != 0
+                && self.domain_to_address(domain.span(), array![].span()) == address {
                 domain
             } else {
                 let identity = IIdentityDispatcher {
@@ -222,7 +227,8 @@ mod Naming {
                     .get_verifier_data(id, 'name', get_contract_address(), 0);
                 let domain = self.unhash_domain(id_hashed_domain);
                 assert(
-                    self.domain_to_address(domain.span()) == address, 'domain not pointing back'
+                    self.domain_to_address(domain.span(), array![].span()) == address,
+                    'domain not pointing back'
                 );
                 domain
             }
