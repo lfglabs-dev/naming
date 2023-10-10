@@ -29,7 +29,8 @@ mod Naming {
     enum Event {
         DomainMint: DomainMint,
         DomainRenewal: DomainRenewal,
-        DomainToResolver: DomainToResolver,
+        DomainResolverUpdate: DomainResolverUpdate,
+        AddressToDomainUpdate: AddressToDomainUpdate,
         DomainTransfer: DomainTransfer,
         SubdomainsReset: SubdomainsReset,
         SaleMetadata: SaleMetadata,
@@ -51,10 +52,17 @@ mod Naming {
     }
 
     #[derive(Drop, starknet::Event)]
-    struct DomainToResolver {
+    struct DomainResolverUpdate {
         #[key]
         domain: Span<felt252>,
         resolver: ContractAddress
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct AddressToDomainUpdate {
+        #[key]
+        address: ContractAddress,
+        domain: Span<felt252>,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -207,11 +215,11 @@ mod Naming {
         }
 
         // This function allows to find which domain to use to display an account
-        fn address_to_domain(self: @ContractState, address: ContractAddress) -> Array<felt252> {
+        fn address_to_domain(self: @ContractState, address: ContractAddress) -> Span<felt252> {
             let mut domain = ArrayTrait::new();
             self._address_to_domain_util(address, ref domain);
             if domain.len() != 0 && self.domain_to_address(domain.span()) == address {
-                domain
+                domain.span()
             } else {
                 let identity = IIdentityDispatcher {
                     contract_address: self.starknetid_contract.read()
@@ -221,9 +229,7 @@ mod Naming {
                 let id_hashed_domain = identity
                     .get_verifier_data(id, 'name', get_contract_address(), 0);
                 let domain = self.unhash_domain(id_hashed_domain);
-                assert(
-                    self.domain_to_address(domain.span()) == address, 'domain not pointing back'
-                );
+                assert(self.domain_to_address(domain) == address, 'domain not pointing back');
                 domain
             }
         }
@@ -360,6 +366,26 @@ mod Naming {
             self.emit(Event::SubdomainsReset(SubdomainsReset { domain: domain, }));
         }
 
+
+        // will override your main id
+        fn set_address_to_domain(ref self: ContractState, domain: Span<felt252>) {
+            let address = get_caller_address();
+            assert(self.domain_to_address(domain) == address, 'domain not pointing back');
+            self.emit(Event::AddressToDomainUpdate(AddressToDomainUpdate { address, domain }));
+            self.set_address_to_domain_util(address, domain);
+        }
+
+        fn reset_address_to_domain(ref self: ContractState) {
+            let address = get_caller_address();
+            self
+                .emit(
+                    Event::AddressToDomainUpdate(
+                        AddressToDomainUpdate { address, domain: array![].span() }
+                    )
+                );
+            self.set_address_to_domain_util(address, array![0].span());
+        }
+
         // ADMIN
 
         fn set_admin(ref self: ContractState, new_admin: ContractAddress) {
@@ -412,7 +438,7 @@ mod Naming {
             return hashed_domain;
         }
 
-        fn unhash_domain(self: @ContractState, domain_hash: felt252) -> Array<felt252> {
+        fn unhash_domain(self: @ContractState, domain_hash: felt252) -> Span<felt252> {
             let mut i = 0;
             let mut domain = ArrayTrait::new();
             loop {
@@ -421,8 +447,9 @@ mod Naming {
                     break;
                 }
                 domain.append(domain_part);
+                i += 1;
             };
-            domain
+            domain.span()
         }
 
         fn assert_purchase_is_possible(
@@ -512,6 +539,20 @@ mod Naming {
             }
         }
 
+        fn set_address_to_domain_util(
+            ref self: ContractState, address: ContractAddress, mut domain: Span<felt252>
+        ) {
+            match domain.pop_back() {
+                Option::Some(domain_part) => {
+                    self._address_to_domain.write((address, domain.len()), *domain_part);
+                    return self.set_address_to_domain_util(address, domain);
+                },
+                Option::None => {
+                    return;
+                }
+            }
+        }
+
         fn domain_to_resolver(
             self: @ContractState, domain: Span<felt252>, parent_start_id: u32
         ) -> (ContractAddress, u32) {
@@ -588,7 +629,7 @@ mod Naming {
                 key: 1,
                 parent_key: 0,
             };
-            self._hash_to_domain.write((hashed_domain, 0), hashed_domain);
+            self._hash_to_domain.write((hashed_domain, 0), domain);
             self._domain_data.write(hashed_domain, data);
             self.emit(Event::DomainMint(DomainMint { domain, owner: id, expiry }));
 
@@ -597,8 +638,8 @@ mod Naming {
             if (resolver.into() != 0) {
                 self
                     .emit(
-                        Event::DomainToResolver(
-                            DomainToResolver { domain: array![domain].span(), resolver }
+                        Event::DomainResolverUpdate(
+                            DomainResolverUpdate { domain: array![domain].span(), resolver }
                         )
                     );
             }
