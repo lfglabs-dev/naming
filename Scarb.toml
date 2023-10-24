@@ -6,7 +6,7 @@ version = "0.1.0"
 
 [dependencies]
 starknet = "2.3.0-rc0"
-openzeppelin = { git = "https://github.com/andrew-fleming/cairo-contracts.git", branch = "component-erc20" }
+openzeppelin = { git = "https://github.com/Th0rgal/cairo-contracts.git", branch = "main" }
 identity = { git = "https://github.com/starknet-id/identity.git", branch = "master" }
 
 [[target.starknet-contract]]
