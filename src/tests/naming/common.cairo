@@ -23,7 +23,6 @@ use naming::pricing::Pricing;
 
 fn deploy() -> (IERC20CamelDispatcher, IPricingDispatcher, IIdentityDispatcher, INamingDispatcher) {
     //erc20
-    let mut calldata = ArrayTrait::<felt252>::new();
     // 0, 1 = low and high of ETH supply
     let eth = utils::deploy(ERC20::TEST_CLASS_HASH, array!['ether', 'ETH', 0, 1, 0x123]);
 
