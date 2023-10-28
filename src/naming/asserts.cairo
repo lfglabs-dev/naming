@@ -8,8 +8,8 @@ use naming::{
     naming::main::{
         Naming,
         Naming::{
-            EventEmitter, _hash_to_domain, _hash_to_domainContractMemberStateTrait, _domain_data,
-            _domain_dataContractMemberStateTrait, starknetid_contract,
+            ContractStateEventEmitter, _hash_to_domain, _hash_to_domainContractMemberStateTrait,
+            _domain_data, _domain_dataContractMemberStateTrait, starknetid_contract,
             starknetid_contractContractMemberStateTrait, discounts,
             discountsContractMemberStateTrait, _address_to_domain,
             _address_to_domainContractMemberStateTrait, _referral_contract,
