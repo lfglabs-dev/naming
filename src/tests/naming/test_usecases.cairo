@@ -205,3 +205,70 @@ fn test_non_owner_can_renew_domain() {
     eth.approve(naming.contract_address, price);
     naming.renew(domain_name, 365, ContractAddressZeroable::zero(), 0, 0);
 }
+
+
+#[test]
+#[available_gas(2000000000)]
+fn test_set_address_to_domain() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let caller = contract_address_const::<0x123>();
+    set_contract_address(caller);
+    let id1: u128 = 1;
+    let id2: u128 = 2;
+    let first_domain_top: felt252 = 82939898252385817;
+    let second_domain_top: felt252 = 3151716132312299378;
+
+    //we mint the ids
+    identity.mint(id1);
+    identity.mint(id2);
+
+    // buy the domains
+    let (_, price1) = pricing.compute_buy_price(11, 365);
+    eth.approve(naming.contract_address, price1);
+    naming
+        .buy(
+            id1,
+            first_domain_top,
+            365,
+            ContractAddressZeroable::zero(),
+            ContractAddressZeroable::zero(),
+            0,
+            0
+        );
+
+    let (_, price2) = pricing.compute_buy_price(12, 365);
+    eth.approve(naming.contract_address, price2);
+    naming
+        .buy(
+            id2,
+            second_domain_top,
+            365,
+            ContractAddressZeroable::zero(),
+            ContractAddressZeroable::zero(),
+            0,
+            0
+        );
+
+    // let's try the resolving
+    let first_domain = array![first_domain_top].span();
+    assert(
+        naming.domain_to_address(first_domain, array![].span()) == caller, 'wrong domain target'
+    );
+
+    // set reverse resolving
+    identity.set_main_id(id1);
+    let expect_domain1 = naming.address_to_domain(caller);
+    assert(expect_domain1 == first_domain, 'wrong rev resolving 1');
+
+    // override reverse resolving
+    let second_domain = array![second_domain_top].span();
+    naming.set_address_to_domain(second_domain);
+    let expect_domain2 = naming.address_to_domain(caller);
+    assert(expect_domain2 == second_domain, 'wrong rev resolving 2');
+
+    // remove override
+    naming.reset_address_to_domain();
+    let expect_domain1 = naming.address_to_domain(caller);
+    assert(expect_domain1 == first_domain, 'wrong rev resolving b');
+}
