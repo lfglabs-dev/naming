@@ -47,6 +47,8 @@ trait INaming<TContractState> {
 
     fn reset_address_to_domain(ref self: TContractState);
 
+    fn set_domain_to_resolver(ref self: TContractState, domain: Span<felt252>, resolver: ContractAddress);
+
     // admin
     fn set_admin(ref self: TContractState, new_admin: ContractAddress);
 

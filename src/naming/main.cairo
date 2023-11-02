@@ -376,6 +376,26 @@ mod Naming {
             self.set_address_to_domain_util(address, array![0].span());
         }
 
+        fn set_domain_to_resolver(
+            ref self: ContractState, domain: Span<felt252>, resolver: ContractAddress
+        ) {
+            self.assert_control_domain(domain, get_caller_address());
+
+            // Write domain owner
+            let hashed_domain = self.hash_domain(domain);
+            let current_domain_data = self._domain_data.read(hashed_domain);
+            let new_domain_data = DomainData {
+                owner: current_domain_data.owner,
+                resolver,
+                address: current_domain_data.address,
+                expiry: current_domain_data.expiry,
+                key: current_domain_data.key,
+                parent_key: current_domain_data.parent_key,
+            };
+            self._domain_data.write(hashed_domain, new_domain_data);
+            self.emit(Event::DomainResolverUpdate(DomainResolverUpdate { domain, resolver }));
+        }
+
         // ADMIN
 
         fn set_admin(ref self: ContractState, new_admin: ContractAddress) {
