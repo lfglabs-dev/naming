@@ -7,6 +7,7 @@ version = "0.1.0"
 [dependencies]
 starknet = "2.3.0-rc0"
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.8.0-beta.0" }
+storage_read = { git = "https://github.com/starknet-id/storage_read_component", branch = "master" }
 identity = { git = "https://github.com/starknet-id/identity.git", branch = "master" }
 
 [[target.starknet-contract]]
