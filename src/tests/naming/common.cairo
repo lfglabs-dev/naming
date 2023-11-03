@@ -30,7 +30,7 @@ fn deploy() -> (IERC20CamelDispatcher, IPricingDispatcher, IIdentityDispatcher, 
     let pricing = utils::deploy(Pricing::TEST_CLASS_HASH, array![eth.into()]);
 
     // identity
-    let identity = utils::deploy(Identity::TEST_CLASS_HASH, ArrayTrait::<felt252>::new());
+    let identity = utils::deploy(Identity::TEST_CLASS_HASH, array![0]);
 
     // naming
     let admin = 0x123;
