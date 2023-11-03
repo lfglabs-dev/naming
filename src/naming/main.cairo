@@ -25,7 +25,7 @@ mod Naming {
     use openzeppelin::token::erc20::interface::{
         IERC20Camel, IERC20CamelDispatcher, IERC20CamelDispatcherTrait
     };
-    use debug::PrintTrait;
+    use storage_read::{main::storage_read_component, interface::IStorageRead};
 
     #[event]
     #[derive(Drop, starknet::Event)]
@@ -37,6 +37,7 @@ mod Naming {
         DomainTransfer: DomainTransfer,
         SubdomainsReset: SubdomainsReset,
         SaleMetadata: SaleMetadata,
+        StorageReadEvent: storage_read_component::Event
     }
 
     #[derive(Drop, starknet::Event)]
@@ -116,6 +117,8 @@ mod Naming {
         _domain_data: LegacyMap<felt252, DomainData>,
         _hash_to_domain: LegacyMap<(felt252, usize), felt252>,
         _address_to_domain: LegacyMap<(ContractAddress, usize), felt252>,
+        #[substorage(v0)]
+        storage_read: storage_read_component::Storage,
     }
 
     #[constructor]
@@ -132,6 +135,10 @@ mod Naming {
         self._admin_address.write(admin);
     }
 
+    component!(path: storage_read_component, storage: storage_read, event: StorageReadEvent);
+
+    #[abi(embed_v0)]
+    impl StorageReadComponent = storage_read_component::StorageRead<ContractState>;
 
     #[external(v0)]
     impl NamingImpl of INaming<ContractState> {
