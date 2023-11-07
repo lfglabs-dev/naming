@@ -145,14 +145,14 @@ impl InternalImpl of InternalTrait {
 
     // returns domain_hash (or zero) and its value for a specific field
     fn resolve_util(
-        self: @Naming::ContractState, domain: Span<felt252>, field: felt252
+        self: @Naming::ContractState, domain: Span<felt252>, field: felt252, hint: Span<felt252>
     ) -> (felt252, felt252) {
         let (resolver, parent_start) = self.domain_to_resolver(domain, 1);
         if (resolver != ContractAddressZeroable::zero()) {
             (
                 0,
                 IResolverDispatcher { contract_address: resolver }
-                    .resolve(domain.slice(0, parent_start), field)
+                    .resolve(domain.slice(0, parent_start), field, hint)
             )
         } else {
             let hashed_domain = self.hash_domain(domain);

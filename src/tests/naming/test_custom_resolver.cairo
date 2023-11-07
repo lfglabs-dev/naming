@@ -36,7 +36,9 @@ mod CustomResolver {
 
     #[external(v0)]
     impl AdditionResolveImpl of IResolver<ContractState> {
-        fn resolve(self: @ContractState, mut domain: Span<felt252>, field: felt252) -> felt252 {
+        fn resolve(
+            self: @ContractState, mut domain: Span<felt252>, field: felt252, hint: Span<felt252>
+        ) -> felt252 {
             let mut output = 0;
             loop {
                 match domain.pop_front() {
@@ -88,12 +90,12 @@ fn test_custom_resolver() {
 
     let domain = array![th0rgal].span();
     // by default we should have nothing written
-    assert(naming.resolve(domain, 'starknet') == 0, 'non empty starknet field');
+    assert(naming.resolve(domain, 'starknet', array![].span()) == 0, 'non empty starknet field');
     // so it should resolve to the starknetid owner
-    assert(naming.domain_to_address(domain) == caller, 'wrong domain target');
+    assert(naming.domain_to_address(domain, array![].span()) == caller, 'wrong domain target');
 
     let domain = array![1, 2, 3, th0rgal].span();
 
     // let's try the resolving
-    assert(naming.resolve(domain, 'starknet') == 1 + 2 + 3, 'wrong target');
+    assert(naming.resolve(domain, 'starknet', array![].span()) == 1 + 2 + 3, 'wrong target');
 }

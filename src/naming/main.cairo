@@ -148,17 +148,21 @@ mod Naming {
         // For example, it allows to find the Bitcoin address of Alice.stark by calling
         // naming.resolve(['alice'], 'bitcoin')
         // Use it with caution in smartcontracts as it can call untrusted contracts
-        fn resolve(self: @ContractState, domain: Span<felt252>, field: felt252) -> felt252 {
-            let (_, value) = self.resolve_util(domain, field);
+        fn resolve(
+            self: @ContractState, domain: Span<felt252>, field: felt252, hint: Span<felt252>
+        ) -> felt252 {
+            let (_, value) = self.resolve_util(domain, field, hint);
             value
         }
 
         // This functions allows to resolve a domain to a native address. Its output is designed
         // to be used as a parameter for other functions (for example if you want to send ERC20
         // to a .stark)
-        fn domain_to_address(self: @ContractState, domain: Span<felt252>) -> ContractAddress {
+        fn domain_to_address(
+            self: @ContractState, domain: Span<felt252>, hint: Span<felt252>
+        ) -> ContractAddress {
             // resolve must be performed first because it calls untrusted resolving contracts
-            let (hashed_domain, value) = self.resolve_util(domain, 'starknet');
+            let (hashed_domain, value) = self.resolve_util(domain, 'starknet', hint);
             if value != 0 {
                 let addr: Option<ContractAddress> = value.try_into();
                 return addr.unwrap();
@@ -204,7 +208,8 @@ mod Naming {
         fn address_to_domain(self: @ContractState, address: ContractAddress) -> Span<felt252> {
             let mut domain = ArrayTrait::new();
             self.read_address_to_domain(address, ref domain);
-            if domain.len() != 0 && self.domain_to_address(domain.span()) == address {
+            if domain.len() != 0
+                && self.domain_to_address(domain.span(), array![].span()) == address {
                 domain.span()
             } else {
                 let identity = IIdentityDispatcher {
@@ -215,7 +220,10 @@ mod Naming {
                 let id_hashed_domain = identity
                     .get_verifier_data(id, 'name', get_contract_address(), 0);
                 let domain = self.unhash_domain(id_hashed_domain);
-                assert(self.domain_to_address(domain) == address, 'domain not pointing back');
+                assert(
+                    self.domain_to_address(domain, array![].span()) == address,
+                    'domain not pointing back'
+                );
                 domain
             }
         }
@@ -356,7 +364,10 @@ mod Naming {
         // will override your main id
         fn set_address_to_domain(ref self: ContractState, domain: Span<felt252>) {
             let address = get_caller_address();
-            assert(self.domain_to_address(domain) == address, 'domain not pointing back');
+            assert(
+                self.domain_to_address(domain, array![].span()) == address,
+                'domain not pointing back'
+            );
             self.emit(Event::AddressToDomainUpdate(AddressToDomainUpdate { address, domain }));
             self.set_address_to_domain_util(address, domain);
         }
@@ -370,6 +381,26 @@ mod Naming {
                     )
                 );
             self.set_address_to_domain_util(address, array![0].span());
+        }
+
+        fn set_domain_to_resolver(
+            ref self: ContractState, domain: Span<felt252>, resolver: ContractAddress
+        ) {
+            self.assert_control_domain(domain, get_caller_address());
+
+            // Write domain owner
+            let hashed_domain = self.hash_domain(domain);
+            let current_domain_data = self._domain_data.read(hashed_domain);
+            let new_domain_data = DomainData {
+                owner: current_domain_data.owner,
+                resolver,
+                address: current_domain_data.address,
+                expiry: current_domain_data.expiry,
+                key: current_domain_data.key,
+                parent_key: current_domain_data.parent_key,
+            };
+            self._domain_data.write(hashed_domain, new_domain_data);
+            self.emit(Event::DomainResolverUpdate(DomainResolverUpdate { domain, resolver }));
         }
 
         // ADMIN

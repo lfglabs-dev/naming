@@ -51,9 +51,9 @@ fn test_basic_usage() {
     // let's try the resolving
     let domain = array![th0rgal].span();
     // by default we should have nothing written
-    assert(naming.resolve(domain, 'starknet') == 0, 'non empty starknet field');
+    assert(naming.resolve(domain, 'starknet', array![].span()) == 0, 'non empty starknet field');
     // so it should resolve to the starknetid owner
-    assert(naming.domain_to_address(domain) == caller, 'wrong domain target');
+    assert(naming.domain_to_address(domain, array![].span()) == caller, 'wrong domain target');
 
     // let's try reverse resolving
     identity.set_main_id(id);
@@ -65,9 +65,12 @@ fn test_basic_usage() {
     identity.set_user_data(id, 'starknet', new_target.into(), 0);
 
     // now we should have nothing written
-    assert(naming.resolve(domain, 'starknet') == new_target.into(), 'wrong starknet field');
+    assert(
+        naming.resolve(domain, 'starknet', array![].span()) == new_target.into(),
+        'wrong starknet field'
+    );
     // and it should resolve to the new domain target
-    assert(naming.domain_to_address(domain) == new_target, 'wrong domain target');
+    assert(naming.domain_to_address(domain, array![].span()) == new_target, 'wrong domain target');
 
     // testing ownership transfer
     let new_id = 2;
@@ -249,7 +252,9 @@ fn test_set_address_to_domain() {
 
     // let's try the resolving
     let first_domain = array![first_domain_top].span();
-    assert(naming.domain_to_address(first_domain) == caller, 'wrong domain target');
+    assert(
+        naming.domain_to_address(first_domain, array![].span()) == caller, 'wrong domain target'
+    );
 
     // set reverse resolving
     identity.set_main_id(id1);
@@ -266,4 +271,33 @@ fn test_set_address_to_domain() {
     naming.reset_address_to_domain();
     let expect_domain1 = naming.address_to_domain(caller);
     assert(expect_domain1 == first_domain, 'wrong rev resolving b');
+}
+
+#[test]
+#[available_gas(2000000000)]
+fn test_set_domain_to_resolver() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let caller = contract_address_const::<0x123>();
+    set_contract_address(caller);
+    let id1: u128 = 1;
+    let domain: felt252 = 82939898252385817;
+
+    //we mint the id
+    identity.mint(id1);
+
+    // buy the domain
+    let (_, price1) = pricing.compute_buy_price(11, 365);
+    eth.approve(naming.contract_address, price1);
+    naming
+        .buy(
+            id1, domain, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+        );
+
+    // set resolver 
+    let resolver = contract_address_const::<0x456>();
+    naming.set_domain_to_resolver(array![domain].span(), resolver);
+
+    let data = naming.domain_to_data(array![domain].span());
+    assert(data.resolver == resolver, 'wrong resolver');
 }

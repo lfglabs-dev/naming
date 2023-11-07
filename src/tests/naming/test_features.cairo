@@ -63,7 +63,10 @@ fn test_subdomains() {
     // we transfer hello.th0rgal.stark to id2
     naming.transfer_domain(subdomain, id2);
 
-    assert(naming.domain_to_address(subdomain) == caller, 'wrong subdomain initial target');
+    assert(
+        naming.domain_to_address(subdomain, array![].span()) == caller,
+        'wrong subdomain initial target'
+    );
 
     // and make sure the owner has been updated
     assert(naming.domain_to_id(subdomain) == id2, 'owner not updated correctly');
@@ -78,7 +81,7 @@ fn test_subdomains() {
 
     // ensure the subdomain was reset
     assert(
-        naming.domain_to_address(subdomain) == ContractAddressZeroable::zero(),
+        naming.domain_to_address(subdomain, array![].span()) == ContractAddressZeroable::zero(),
         'target not updated correctly'
     );
 }
