@@ -9,11 +9,11 @@ use starknet::ContractAddress;
 use starknet::contract_address::ContractAddressZeroable;
 use starknet::contract_address_const;
 use starknet::testing::set_contract_address;
-use openzeppelin::token::erc20::{
-    erc20::ERC20, interface::{IERC20Camel, IERC20CamelDispatcher, IERC20CamelDispatcherTrait}
-};
 use identity::{
     identity::main::Identity, interface::identity::{IIdentityDispatcher, IIdentityDispatcherTrait}
+};
+use openzeppelin::token::erc20::{
+    interface::{IERC20Camel, IERC20CamelDispatcher, IERC20CamelDispatcherTrait}
 };
 use naming::interface::naming::{INamingDispatcher, INamingDispatcherTrait};
 use naming::interface::pricing::{IPricingDispatcher, IPricingDispatcherTrait};

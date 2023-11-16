@@ -181,7 +181,7 @@ mod Naming {
                 return data.address;
             };
             IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
-                .owner_of(self.domain_to_id(domain))
+                .owner_from_id(self.domain_to_id(domain))
         }
 
         // This returns the stored DomainData associated to this domain

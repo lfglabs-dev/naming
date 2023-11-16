@@ -72,7 +72,7 @@ impl AssertionsImpl of AssertionsTrait {
             ContractAddressZeroable::zero()
         } else {
             IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
-                .owner_of(data.owner)
+                .owner_from_id(data.owner)
         };
 
         // if caller owns the starknet id, he owns the domain, we return the key
