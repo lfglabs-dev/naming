@@ -33,6 +33,7 @@ mod Naming {
         DomainMint: DomainMint,
         DomainRenewal: DomainRenewal,
         DomainResolverUpdate: DomainResolverUpdate,
+        LegacyDomainToAddressClear: LegacyDomainToAddressClear,
         AddressToDomainUpdate: AddressToDomainUpdate,
         DomainTransfer: DomainTransfer,
         SubdomainsReset: SubdomainsReset,
@@ -60,6 +61,12 @@ mod Naming {
         #[key]
         domain: Span<felt252>,
         resolver: ContractAddress
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct LegacyDomainToAddressClear {
+        #[key]
+        domain: Span<felt252>,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -370,6 +377,24 @@ mod Naming {
             );
             self.emit(Event::AddressToDomainUpdate(AddressToDomainUpdate { address, domain }));
             self.set_address_to_domain_util(address, domain);
+        }
+
+        // this allows to reset the target set via Cairo Zero, can't be tested
+        fn clear_legacy_domain_to_address(ref self: ContractState, domain: Span<felt252>) {
+            let address = get_caller_address();
+            self.assert_control_domain(domain, address);
+            self.emit(Event::LegacyDomainToAddressClear(LegacyDomainToAddressClear { domain }));
+            let hashed_domain = self.hash_domain(domain);
+            let current_domain_data = self._domain_data.read(hashed_domain);
+            let new_domain_data = DomainData {
+                owner: current_domain_data.owner,
+                resolver: current_domain_data.resolver,
+                address: ContractAddressZeroable::zero(),
+                expiry: current_domain_data.expiry,
+                key: current_domain_data.key,
+                parent_key: current_domain_data.parent_key,
+            };
+            self._domain_data.write(hashed_domain, new_domain_data);
         }
 
         fn reset_address_to_domain(ref self: ContractState) {
