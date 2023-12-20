@@ -99,8 +99,9 @@ impl AssertionsImpl of AssertionsTrait {
             contract_address: self.starknetid_contract.read()
         }
             .get_verifier_data(identity, 'name', get_contract_address(), 0);
+        let domain_expiry = self._domain_data.read(id_hashed_domain).expiry;
         assert(
-            id_hashed_domain == 0 || self._domain_data.read(id_hashed_domain).expiry < timestamp,
+            id_hashed_domain == 0 || (domain_expiry != 0 && domain_expiry < timestamp),
             'this id holds a domain'
         );
     }
