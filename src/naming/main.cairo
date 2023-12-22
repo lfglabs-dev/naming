@@ -36,6 +36,7 @@ mod Naming {
         LegacyDomainToAddressClear: LegacyDomainToAddressClear,
         AddressToDomainUpdate: AddressToDomainUpdate,
         DomainTransfer: DomainTransfer,
+        DomainMigrated: DomainMigrated,
         SubdomainsReset: SubdomainsReset,
         SaleMetadata: SaleMetadata,
         StorageReadEvent: storage_read_component::Event
@@ -82,6 +83,12 @@ mod Naming {
         domain: Span<felt252>,
         prev_owner: u128,
         new_owner: u128
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct DomainMigrated {
+        #[key]
+        domain: Span<felt252>,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -332,6 +339,10 @@ mod Naming {
                 }
             };
 
+            // if a subdomain is created
+            if self._hash_to_domain.read((hashed_domain, 0)) == 0 {
+                self.store_unhashed_domain(domain, hashed_domain);
+            };
             self._domain_data.write(hashed_domain, new_domain_data);
             self
                 .emit(
@@ -406,6 +417,13 @@ mod Naming {
                     )
                 );
             self.set_address_to_domain_util(address, array![0].span());
+        }
+
+        // allows to unhash domains minted in Cairo Zero
+        fn migrate_domain(ref self: ContractState, domain: Span<felt252>) {
+            let hashed_domain = self.hash_domain(domain);
+            self.store_unhashed_domain(domain, hashed_domain);
+            self.emit(Event::DomainMigrated(DomainMigrated { domain }));
         }
 
         fn set_domain_to_resolver(

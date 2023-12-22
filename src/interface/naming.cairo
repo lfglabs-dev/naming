@@ -49,6 +49,8 @@ trait INaming<TContractState> {
 
     fn reset_address_to_domain(ref self: TContractState);
 
+    fn migrate_domain(ref self: TContractState, domain: Span<felt252>);
+
     fn set_domain_to_resolver(
         ref self: TContractState, domain: Span<felt252>, resolver: ContractAddress
     );

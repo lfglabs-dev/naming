@@ -1,3 +1,4 @@
+use core::array::SpanTrait;
 use naming::{
     naming::main::{Naming, Naming::{_hash_to_domain, _hash_to_domainContractMemberStateTrait}}
 };
@@ -14,6 +15,17 @@ impl UtilsImpl of UtilsTrait {
         let y = self.hash_domain(domain.slice(0, new_len));
         let hashed_domain = pedersen::pedersen(x, y);
         return hashed_domain;
+    }
+
+    fn store_unhashed_domain(
+        ref self: Naming::ContractState, mut domain: Span<felt252>, hashed: felt252
+    ) {
+        loop {
+            match domain.pop_back() {
+                Option::Some(x) => { self._hash_to_domain.write((hashed, domain.len()), *x); },
+                Option::None => { break; }
+            }
+        };
     }
 
     fn unhash_domain(self: @Naming::ContractState, domain_hash: felt252) -> Span<felt252> {
