@@ -203,6 +203,11 @@ mod Naming {
             self._domain_data.read(self.hash_domain(domain))
         }
 
+        // This returns the expiry associated to this domain
+        fn domain_to_expiry(self: @ContractState, domain: Span<felt252>) -> u64 {
+            self._domain_data.read(self.hash_domain(domain)).expiry
+        }
+
         // This returns the identity (StarknetID) owning the domain
         fn domain_to_id(self: @ContractState, domain: Span<felt252>) -> u128 {
             let data = self._domain_data.read(self.hash_domain(domain));

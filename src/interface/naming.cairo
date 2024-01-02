@@ -10,6 +10,8 @@ trait INaming<TContractState> {
 
     fn domain_to_data(self: @TContractState, domain: Span<felt252>) -> DomainData;
 
+    fn domain_to_expiry(self: @TContractState, domain: Span<felt252>) -> u64;
+
     fn domain_to_id(self: @TContractState, domain: Span<felt252>) -> u128;
 
     fn domain_to_address(
