@@ -458,6 +458,27 @@ mod Naming {
             self._admin_address.write(new_admin);
         }
 
+        fn set_expiry(
+            ref self: ContractState, root_domain: felt252, expiry: u64, metadata: felt252
+        ) {
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            let hashed_domain = self.hash_domain(array![root_domain].span());
+            let domain_data = self._domain_data.read(hashed_domain);
+            let data = DomainData {
+                owner: domain_data.owner,
+                resolver: domain_data.resolver,
+                address: domain_data.address,
+                expiry: expiry,
+                key: domain_data.key,
+                parent_key: 0,
+            };
+            self._domain_data.write(hashed_domain, data);
+            self
+                .emit(
+                    Event::DomainRenewal(DomainRenewal { domain: root_domain, new_expiry: expiry })
+                );
+        }
+
         fn claim_balance(ref self: ContractState, erc20: ContractAddress) {
             assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
             let balance = IERC20CamelDispatcher { contract_address: erc20 }
