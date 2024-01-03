@@ -95,6 +95,8 @@ fn test_custom_resolver() {
 
     let domain = array![1, 2, 3, th0rgal].span();
 
+    let new_target = contract_address_const::<0x6>();
     // let's try the resolving
     assert(naming.resolve(domain, 'starknet', array![].span()) == 1 + 2 + 3, 'wrong target');
+    assert(naming.domain_to_address(domain, array![].span()) == new_target, 'wrong target');
 }
