@@ -1,3 +1,4 @@
+use core::traits::TryInto;
 use core::array::SpanTrait;
 use naming::{
     interface::{
@@ -66,12 +67,13 @@ impl AssertionsImpl of AssertionsTrait {
     fn assert_is_owner(
         self: @Naming::ContractState, domain: Span<felt252>, account: ContractAddress
     ) {
-        let mut i = 1;
-        let stop = domain.len() + 1;
+        let mut i: felt252 = 1;
+        let stop = (domain.len() + 1).into();
         let mut parent_key = 0;
         loop {
             assert(i != stop, 'you don\'t own this domain');
-            let active_domain = domain.slice(domain.len() - i, i);
+            let i_gas_saver = i.try_into().unwrap();
+            let active_domain = domain.slice(domain.len() - i_gas_saver, i_gas_saver);
             let hashed_domain = self.hash_domain(active_domain);
             let data = self._domain_data.read(hashed_domain);
 
