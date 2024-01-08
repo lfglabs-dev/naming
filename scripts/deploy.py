@@ -17,14 +17,23 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 load_dotenv()
-NETWORK = os.getenv("STARKNET_NETWORK", "devnet")
+NETWORK = os.getenv("STARKNET_NETWORK")
+
 # https://api.starknet.id/uri?id=
-MAINNET_CONST = [0x68747470733A2F2F6170692E737461726B6E65742E69642F7572693F69643D]
-# https://goerli.api.starknet.id/uri?id="
-GOERLI_CONST = [
-    0x68747470733A2F2F676F65726C692E6170692E737461726B6E65742E69642F,
-    0x7572693F69643D,
-]
+if NETWORK == "mainnet":
+    CONST = [0x68747470733A2F2F6170692E737461726B6E65742E69642F7572693F69643D]
+# https://goerli.api.starknet.id/uri?id=
+elif NETWORK == "goerli":
+    CONST = [
+        0x68747470733A2F2F676F65726C692E6170692E737461726B6E65742E69642F,
+        0x7572693F69643D,
+    ]
+# https://sepolia.api.starknet.id/uri?id=
+elif NETWORK == "sepolia":
+    CONST = [
+        184555836509371486645449132961545395972629558923458913947591422899062204772,
+        3419765288418763837,
+    ]
 
 
 # %% Main
@@ -43,7 +52,7 @@ async def main():
     deployments["naming_Identity"] = await deploy_v2(
         "naming_Identity",
         account.address,
-        (MAINNET_CONST if NETWORK == "mainnet" else GOERLI_CONST),
+        CONST,
     )
     identity_addr = deployments["naming_Identity"]["address"]
 

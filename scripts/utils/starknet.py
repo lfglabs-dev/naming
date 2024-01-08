@@ -23,9 +23,11 @@ from utils.constants import (
     # CONTRACTS,
     DEPLOYMENTS_DIR,
     ETH_TOKEN_ADDRESS,
-    VARS,
     FULL_NODE_CLIENT,
     # SOURCE_DIR,
+    ACCOUNT_ADDRESS,
+    PRIVATE_KEY,
+    CHAIN_ID
 )
 
 logging.basicConfig()
@@ -44,13 +46,13 @@ async def get_starknet_account(
     address=None,
     private_key=None,
 ) -> Account:
-    address = address or VARS["account_address"]
+    address = address or ACCOUNT_ADDRESS
     if address is None:
         raise ValueError(
             "address was not given in arg nor in env variable, see README.md#Deploy"
         )
     address = int(address, 16)
-    private_key = private_key or VARS["private_key"]
+    private_key = private_key or PRIVATE_KEY
     if private_key is None:
         raise ValueError(
             "private_key was not given in arg nor in env variable, see README.md#Deploy"
@@ -60,7 +62,7 @@ async def get_starknet_account(
     return Account(
         address=address,
         client=FULL_NODE_CLIENT,
-        chain=VARS["chain_id"],
+        chain=CHAIN_ID,
         key_pair=key_pair,
     )
 
@@ -123,11 +125,6 @@ def get_artifact(contract_name):
 
 def get_alias(contract_name):
     return snakecase(contract_name)
-
-
-def get_tx_url(tx_hash: int) -> str:
-    return f"{VARS['explorer_url']}/tx/0x{tx_hash:064x}"
-
 
 def get_sierra_artifact(contract_name):
     return BUILD_DIR / f"{contract_name}.contract_class.json"
