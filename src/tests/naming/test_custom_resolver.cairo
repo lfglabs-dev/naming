@@ -1,6 +1,5 @@
 use array::ArrayTrait;
 use array::SpanTrait;
-use debug::PrintTrait;
 use option::OptionTrait;
 use zeroable::Zeroable;
 use traits::Into;
@@ -28,7 +27,6 @@ use naming::interface::resolver::IResolver;
 mod CustomResolver {
     use core::array::SpanTrait;
     use naming::interface::resolver::IResolver;
-    use debug::PrintTrait;
 
     #[storage]
     struct Storage {}
