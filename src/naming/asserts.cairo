@@ -29,7 +29,6 @@ use openzeppelin::token::erc20::interface::{
 };
 use integer::{u256_safe_divmod, u256_as_non_zero};
 use naming::naming::utils::UtilsTrait;
-use debug::PrintTrait;
 
 #[generate_trait]
 impl AssertionsImpl of AssertionsTrait {
