@@ -44,13 +44,15 @@ impl InternalImpl of InternalTrait {
     fn set_address_to_domain_util(
         ref self: Naming::ContractState, address: ContractAddress, mut domain: Span<felt252>
     ) {
-        match domain.pop_back() {
-            Option::Some(domain_part) => {
-                self._address_to_domain.write((address, domain.len()), *domain_part);
-                self.set_address_to_domain_util(address, domain)
-            },
-            Option::None => {}
-        }
+        self._address_to_domain.write((address, domain.len()), 0);
+        loop {
+            match domain.pop_back() {
+                Option::Some(domain_part) => {
+                    self._address_to_domain.write((address, domain.len()), *domain_part);
+                },
+                Option::None => { break; }
+            }
+        };
     }
 
     fn domain_to_resolver(
