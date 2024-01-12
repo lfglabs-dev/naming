@@ -247,7 +247,6 @@ mod Naming {
             }
         }
 
-
         // EXTERNAL
 
         fn buy(
