@@ -10,6 +10,9 @@ mod Naming {
     use starknet::class_hash::ClassHash;
     use integer::{u256_safe_divmod, u256_as_non_zero};
     use core::pedersen;
+    use hash::LegacyHash;
+    use ecdsa::check_ecdsa_signature;
+    use wadray::Wad;
     use naming::{
         naming::{asserts::AssertionsTrait, internal::InternalTrait, utils::UtilsTrait},
         interface::{
@@ -131,6 +134,7 @@ mod Naming {
         _domain_data: LegacyMap<felt252, DomainData>,
         _hash_to_domain: LegacyMap<(felt252, usize), felt252>,
         _address_to_domain: LegacyMap<(ContractAddress, usize), felt252>,
+        _server_pub_key: felt252,
         #[substorage(v0)]
         storage_read: storage_read_component::Storage,
     }
@@ -272,6 +276,64 @@ mod Naming {
             self.mint_domain(expiry, resolver, hashed_domain, id, domain);
         }
 
+        fn altcoin_buy(
+            ref self: ContractState,
+            id: u128,
+            domain: felt252,
+            days: u16,
+            resolver: ContractAddress,
+            sponsor: ContractAddress,
+            discount_id: felt252,
+            metadata: felt252,
+            altcoin_addr: ContractAddress,
+            quote: Wad,
+            max_validity: u64,
+            sig: (felt252, felt252),
+        ) {
+            let (hashed_domain, now, expiry) = self.assert_purchase_is_possible(id, domain, days);
+            // we need a u256 to be able to perform safe divisions
+            let domain_len = self.get_chars_len(domain.into());
+
+            // check quote timestamp is still valid
+            assert(get_block_timestamp() <= max_validity, 'quotation expired');
+
+            // verify signature
+            let altcoin: felt252 = altcoin_addr.into();
+            let quote_felt : felt252 = quote.into();
+            let message_hash = LegacyHash::hash(
+                LegacyHash::hash(
+                    LegacyHash::hash(
+                        LegacyHash::hash(get_caller_address().into(), altcoin), quote_felt
+                    ),
+                    max_validity
+                ),
+                'starknet id altcoin quote'
+            );
+            let (sig0, sig1) = sig;
+            let is_valid = check_ecdsa_signature(message_hash, self._server_pub_key.read(), sig0, sig1);
+            assert(is_valid, 'Invalid signature');
+
+            // find domain cost in ETH
+            let (_, price_in_eth) = IPricingDispatcher {
+                contract_address: self._pricing_contract.read()
+            }
+                .compute_buy_price(domain_len, days);
+            // compute domain cost in altcoin
+            let price_in_altcoin = self.get_altcoin_price(quote, price_in_eth.try_into().unwrap());
+            self
+                .pay_domain(
+                    domain_len,
+                    altcoin_addr,
+                    price_in_altcoin,
+                    now,
+                    days,
+                    domain,
+                    sponsor,
+                    discount_id
+                );
+            self.emit(Event::SaleMetadata(SaleMetadata { domain, metadata }));
+            self.mint_domain(expiry, resolver, hashed_domain, id, domain);
+        }
 
         fn renew(
             ref self: ContractState,
@@ -293,6 +355,73 @@ mod Naming {
             }
                 .compute_renew_price(domain_len, days);
             self.pay_domain(domain_len, erc20, price, now, days, domain, sponsor, discount_id);
+            self.emit(Event::SaleMetadata(SaleMetadata { domain, metadata }));
+            // find new domain expiry
+            let new_expiry = if domain_data.expiry <= now {
+                now + 86400 * days.into()
+            } else {
+                domain_data.expiry + 86400 * days.into()
+            };
+            // 25*365 = 9125
+            assert(new_expiry <= now + 86400 * 9125, 'purchase too long');
+            assert(days >= 6 * 30, 'purchase too short');
+
+            let data = DomainData {
+                owner: domain_data.owner,
+                resolver: domain_data.resolver,
+                address: domain_data.address,
+                expiry: new_expiry,
+                key: domain_data.key,
+                parent_key: 0,
+            };
+            self._domain_data.write(hashed_domain, data);
+            self.emit(Event::DomainRenewal(DomainRenewal { domain, new_expiry }));
+        }
+
+        fn altcoin_renew(
+            ref self: ContractState,
+            domain: felt252,
+            days: u16,
+            sponsor: ContractAddress,
+            discount_id: felt252,
+            metadata: felt252,
+            altcoin_addr: ContractAddress,
+            quote: Wad,
+            max_validity: u64,
+            sig: (felt252, felt252),
+        ) {
+            let now = get_block_timestamp();
+            let hashed_domain = self.hash_domain(array![domain].span());
+            let domain_data = self._domain_data.read(hashed_domain);
+
+            // check quote timestamp is still valid
+            assert(get_block_timestamp() <= max_validity, 'quotation expired');
+            // verify signature
+            let altcoin: felt252 = altcoin_addr.into();
+            let quote_felt : felt252 = quote.into();
+            let message_hash = LegacyHash::hash(
+                LegacyHash::hash(
+                    LegacyHash::hash(
+                        LegacyHash::hash(get_caller_address().into(), altcoin), quote_felt
+                    ),
+                    max_validity
+                ),
+                'starknet id altcoin quote'
+            );
+            let (sig0, sig1) = sig;
+            let is_valid = check_ecdsa_signature(message_hash, self._server_pub_key.read(), sig0, sig1);
+            assert(is_valid, 'Invalid signature');
+
+            // we need a u256 to be able to perform safe divisions
+            let domain_len = self.get_chars_len(domain.into());
+            // find domain cost in ETH
+            let (_, price_in_eth) = IPricingDispatcher {
+                contract_address: self._pricing_contract.read()
+            }
+                .compute_renew_price(domain_len, days);
+            // compute domain cost in altcoin
+            let price_in_altcoin = self.get_altcoin_price(quote, price_in_eth.try_into().unwrap());
+            self.pay_domain(domain_len, altcoin_addr, price_in_altcoin, now, days, domain, sponsor, discount_id);
             self.emit(Event::SaleMetadata(SaleMetadata { domain, metadata }));
             // find new domain expiry
             let new_expiry = if domain_data.expiry <= now {
@@ -506,6 +635,11 @@ mod Naming {
             // todo: use components
             assert(!new_class_hash.is_zero(), 'Class hash cannot be zero');
             starknet::replace_class_syscall(new_class_hash).unwrap();
+        }
+
+        fn set_server_pub_key(ref self: ContractState, new_key: felt252) {
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self._server_pub_key.write(new_key);
         }
     }
 }

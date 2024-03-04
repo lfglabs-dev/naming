@@ -1,5 +1,6 @@
 use starknet::{ContractAddress, ClassHash};
 use naming::naming::main::Naming::{Discount, DomainData};
+use wadray::Wad;
 
 #[starknet::interface]
 trait INaming<TContractState> {
@@ -32,6 +33,21 @@ trait INaming<TContractState> {
         metadata: felt252,
     );
 
+    fn altcoin_buy(
+        ref self: TContractState,
+        id: u128,
+        domain: felt252,
+        days: u16,
+        resolver: ContractAddress,
+        sponsor: ContractAddress,
+        discount_id: felt252,
+        metadata: felt252,
+        altcoin_addr: ContractAddress,
+        quote: Wad,
+        max_validity: u64,
+        sig: (felt252, felt252),
+    );
+
     fn renew(
         ref self: TContractState,
         domain: felt252,
@@ -39,6 +55,19 @@ trait INaming<TContractState> {
         sponsor: ContractAddress,
         discount_id: felt252,
         metadata: felt252,
+    );
+
+    fn altcoin_renew(
+        ref self: TContractState,
+        domain: felt252,
+        days: u16,
+        sponsor: ContractAddress,
+        discount_id: felt252,
+        metadata: felt252,
+        altcoin_addr: ContractAddress,
+        quote: Wad,
+        max_validity: u64,
+        sig: (felt252, felt252),
     );
 
     fn transfer_domain(ref self: TContractState, domain: Span<felt252>, target_id: u128);
@@ -71,4 +100,6 @@ trait INaming<TContractState> {
     fn set_referral_contract(ref self: TContractState, referral_contract: ContractAddress);
 
     fn upgrade(ref self: TContractState, new_class_hash: ClassHash);
+
+    fn set_server_pub_key(ref self: TContractState, new_key: felt252);
 }

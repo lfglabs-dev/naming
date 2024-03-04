@@ -9,6 +9,7 @@ starknet = "2.3.1"
 openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", rev = "f3e2a5f0547a429c716f32471b06df729cbdfb9f" }
 storage_read = { git = "https://github.com/starknet-id/storage_read_component.git", rev = "c6c69e15d34abfc39ac51dc21b96724e2e19ff31" }
 identity = { git = "https://github.com/starknet-id/identity.git", rev = "eb37846330b78e1410cf5e3e17a5dcca5652f921" }
+wadray = { git = "https://github.com/lindy-labs/wadray.git", rev = "ea1fa019e7c7c60878ac1e613bc81693524436f5" }
 
 [[target.starknet-contract]]
 # Enable Sierra codegen.
