@@ -299,18 +299,15 @@ mod Naming {
 
             // verify signature
             let altcoin: felt252 = altcoin_addr.into();
-            let quote_felt : felt252 = quote.into();
+            let quote_felt: felt252 = quote.into();
             let message_hash = LegacyHash::hash(
-                LegacyHash::hash(
-                    LegacyHash::hash(
-                        LegacyHash::hash(get_caller_address().into(), altcoin), quote_felt
-                    ),
-                    max_validity
-                ),
+                LegacyHash::hash(LegacyHash::hash(altcoin, quote_felt), max_validity),
                 'starknet id altcoin quote'
             );
             let (sig0, sig1) = sig;
-            let is_valid = check_ecdsa_signature(message_hash, self._server_pub_key.read(), sig0, sig1);
+            let is_valid = check_ecdsa_signature(
+                message_hash, self._server_pub_key.read(), sig0, sig1
+            );
             assert(is_valid, 'Invalid signature');
 
             // find domain cost in ETH
@@ -398,18 +395,15 @@ mod Naming {
             assert(get_block_timestamp() <= max_validity, 'quotation expired');
             // verify signature
             let altcoin: felt252 = altcoin_addr.into();
-            let quote_felt : felt252 = quote.into();
+            let quote_felt: felt252 = quote.into();
             let message_hash = LegacyHash::hash(
-                LegacyHash::hash(
-                    LegacyHash::hash(
-                        LegacyHash::hash(get_caller_address().into(), altcoin), quote_felt
-                    ),
-                    max_validity
-                ),
+                LegacyHash::hash(LegacyHash::hash(altcoin, quote_felt), max_validity),
                 'starknet id altcoin quote'
             );
             let (sig0, sig1) = sig;
-            let is_valid = check_ecdsa_signature(message_hash, self._server_pub_key.read(), sig0, sig1);
+            let is_valid = check_ecdsa_signature(
+                message_hash, self._server_pub_key.read(), sig0, sig1
+            );
             assert(is_valid, 'Invalid signature');
 
             // we need a u256 to be able to perform safe divisions
@@ -421,7 +415,17 @@ mod Naming {
                 .compute_renew_price(domain_len, days);
             // compute domain cost in altcoin
             let price_in_altcoin = self.get_altcoin_price(quote, price_in_eth.try_into().unwrap());
-            self.pay_domain(domain_len, altcoin_addr, price_in_altcoin, now, days, domain, sponsor, discount_id);
+            self
+                .pay_domain(
+                    domain_len,
+                    altcoin_addr,
+                    price_in_altcoin,
+                    now,
+                    days,
+                    domain,
+                    sponsor,
+                    discount_id
+                );
             self.emit(Event::SaleMetadata(SaleMetadata { domain, metadata }));
             // find new domain expiry
             let new_expiry = if domain_data.expiry <= now {

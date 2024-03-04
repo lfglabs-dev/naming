@@ -73,8 +73,8 @@ fn test_buy_domain_with_strk() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x2460d27e5d5f25e2b6450a57853d634f812484e9d7c541adcbd04d9a22f3632,
-        0x7f8723da0253c58ebccc036b5060f4538ed4301f40d66f4aa0ba3932adb9b31
+        0x2d46882b7601332cab0b45a44c5da71d7cb8698d2aaa3eee1c777430047b4b1,
+        0x2eaebd6d46827e5bb1fd5c1a96c85f5dfbf3b77df03627545594e695867348a
     );
     naming
         .altcoin_buy(
@@ -130,8 +130,8 @@ fn test_buy_domain_altcoin_quote_expired() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x2460d27e5d5f25e2b6450a57853d634f812484e9d7c541adcbd04d9a22f3632,
-        0x7f8723da0253c58ebccc036b5060f4538ed4301f40d66f4aa0ba3932adb9b31
+        0x2d46882b7601332cab0b45a44c5da71d7cb8698d2aaa3eee1c777430047b4b1,
+        0x2eaebd6d46827e5bb1fd5c1a96c85f5dfbf3b77df03627545594e695867348a
     );
 
     // we try buying after the max_validity timestamp
@@ -184,8 +184,8 @@ fn test_buy_domain_altcoin_wrong_quote() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x2460d27e5d5f25e2b6450a57853d634f812484e9d7c541adcbd04d9a22f3632,
-        0x7f8723da0253c58ebccc036b5060f4538ed4301f40d66f4aa0ba3932adb9b31
+        0x2d46882b7601332cab0b45a44c5da71d7cb8698d2aaa3eee1c777430047b4b1,
+        0x2eaebd6d46827e5bb1fd5c1a96c85f5dfbf3b77df03627545594e695867348a
     );
     // we try buying with a quote lower than the actual price
     naming
@@ -234,8 +234,8 @@ fn test_renew_domain_with_strk() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x2460d27e5d5f25e2b6450a57853d634f812484e9d7c541adcbd04d9a22f3632,
-        0x7f8723da0253c58ebccc036b5060f4538ed4301f40d66f4aa0ba3932adb9b31
+        0x2d46882b7601332cab0b45a44c5da71d7cb8698d2aaa3eee1c777430047b4b1,
+        0x2eaebd6d46827e5bb1fd5c1a96c85f5dfbf3b77df03627545594e695867348a
     );
     naming
         .altcoin_buy(
@@ -269,22 +269,25 @@ fn test_renew_domain_with_strk() {
     // we renew with no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x35ca6ee2dadda50edb4fe0f50aa2aae356a4d695e1e34dfbecb366a44cb5495,
-        0x65d27e9121fc9712781b5a815461049a380ad87aac051f174c5c482195dcb90
+        0x42768490cdba55ef41ac540caab9a9ec4133b5d1f42289d2c32f5c1efc07f65,
+        0x15d56a36d5fa94dc183ef32f4f9bc3d7f0d4b68b8b07a4541cad11a8c9cf7f6
     );
-    naming.altcoin_renew(
-        th0rgal, 
-        365, 
-        ContractAddressZeroable::zero(), 
-        0, 
-        0, 
-        strk.contract_address,
-        quote,
-        max_validity,
-        sig
-    );
+    naming
+        .altcoin_renew(
+            th0rgal,
+            365,
+            ContractAddressZeroable::zero(),
+            0,
+            0,
+            strk.contract_address,
+            quote,
+            max_validity,
+            sig
+        );
     assert(strk.allowance(caller, naming.contract_address) == 0, 'allowance not reset');
-    assert(naming.domain_to_data(array![th0rgal].span()).expiry == 2 * 365 * 86400, 'invalid renew expiry');
+    assert(
+        naming.domain_to_data(array![th0rgal].span()).expiry == 2 * 365 * 86400,
+        'invalid renew expiry'
+    );
 }
-
 

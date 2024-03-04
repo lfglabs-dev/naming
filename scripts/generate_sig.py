@@ -11,7 +11,7 @@ erc20_addr = 0x5
 quote = 1221805004292776
 max_validity = 1000
 encoded_string = 724720344857006587549020016926517802128122613457935427138661
-data = pedersen_hash(pedersen_hash(pedersen_hash(pedersen_hash(user_addr, erc20_addr), quote), max_validity), encoded_string)
+data = pedersen_hash(pedersen_hash(pedersen_hash(erc20_addr, quote), max_validity), encoded_string)
 
 (x, y) = sign(data, priv_key)
 print("sig:", hex(x), hex(y))
