@@ -63,9 +63,9 @@ fn test_buy_domain_with_strk() {
     identity.mint(id1);
 
     // we check how much a domain costs
-    let quote = Wad { val: 5221805004292776 };
+    let quote = 5221805004292776_u128;
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
-    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote;
+    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote.into();
 
     // we allow the naming to take our money
     strk.approve(naming.contract_address, price_in_strk.into());
@@ -120,9 +120,9 @@ fn test_buy_domain_altcoin_quote_expired() {
     identity.mint(id1);
 
     // we check how much a domain costs
-    let quote = Wad { val: 5221805004292776 };
+    let quote = 5221805004292776_u128;
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
-    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote;
+    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote.into();
 
     // we allow the naming to take our money
     strk.approve(naming.contract_address, price_in_strk.into());
@@ -174,9 +174,9 @@ fn test_buy_domain_altcoin_wrong_quote() {
     identity.mint(id1);
 
     // we check how much a domain costs
-    let quote = Wad { val: 5221805004292776 };
+    let quote = 5221805004292776_u128;
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
-    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote;
+    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote.into();
 
     // we allow the naming to take our money
     strk.approve(naming.contract_address, price_in_strk.into());
@@ -198,7 +198,7 @@ fn test_buy_domain_altcoin_wrong_quote() {
             0,
             0,
             strk.contract_address,
-            Wad { val: 1 },
+            1,
             max_validity,
             sig
         );
@@ -224,9 +224,9 @@ fn test_renew_domain_with_strk() {
     identity.mint(id1);
 
     // we check how much a domain costs
-    let quote = Wad { val: 5221805004292776 };
+    let quote = 5221805004292776_u128;
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
-    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote;
+    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote.into();
 
     // we allow the naming to take our money
     strk.approve(naming.contract_address, price_in_strk.into());
@@ -259,9 +259,9 @@ fn test_renew_domain_with_strk() {
     );
 
     // we check how much a domain costs to renew
-    let quote = Wad { val: 1221805004292776 };
+    let quote = 1221805004292776_u128;
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
-    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote;
+    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote.into();
 
     // we allow the naming to take our money
     strk.approve(naming.contract_address, price_in_strk.into());

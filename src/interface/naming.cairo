@@ -1,6 +1,5 @@
 use starknet::{ContractAddress, ClassHash};
 use naming::naming::main::Naming::{Discount, DomainData};
-use wadray::Wad;
 
 #[starknet::interface]
 trait INaming<TContractState> {
@@ -43,7 +42,7 @@ trait INaming<TContractState> {
         discount_id: felt252,
         metadata: felt252,
         altcoin_addr: ContractAddress,
-        quote: Wad,
+        quote: u128,
         max_validity: u64,
         sig: (felt252, felt252),
     );
@@ -65,7 +64,7 @@ trait INaming<TContractState> {
         discount_id: felt252,
         metadata: felt252,
         altcoin_addr: ContractAddress,
-        quote: Wad,
+        quote: u128,
         max_validity: u64,
         sig: (felt252, felt252),
     );
