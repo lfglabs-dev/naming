@@ -31,7 +31,7 @@ fn test_convert_quote_to_eth() {
 
     // User wants to buy a domain in STRK for one year
     let domain_price_eth = Wad { val: 8999999999999875 };
-    // 1 STRK = 0,005221805004292776 ETH
+    // 1 STRK = 0,00522180500429277 ETH
     let quote = Wad { val: 5221805004292776 };
 
     assert(
@@ -291,3 +291,27 @@ fn test_renew_domain_with_strk() {
     );
 }
 
+#[test]
+#[available_gas(200000000000)]
+fn test_hash_matches() {
+    let contract = contract_address_const::<
+        0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d
+    >();
+    let erc20_addr: felt252 = contract.into();
+
+    let quote: Wad = Wad { val: 607843394028633 };
+    let quote_felt: felt252 = quote.into();
+
+    let max_validity: felt252 = 1709635880;
+
+    let message_hash = core::hash::LegacyHash::hash(
+        core::hash::LegacyHash::hash(
+            core::hash::LegacyHash::hash(erc20_addr, quote_felt), max_validity
+        ),
+        'starknet id altcoin quote'
+    );
+    assert(
+        message_hash == 0x00b693e8796152c46cbef85de6c8880520aad37af639702a70a3d907ff5cb114,
+        'wrong hash'
+    );
+}
