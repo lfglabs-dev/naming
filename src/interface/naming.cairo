@@ -69,7 +69,7 @@ trait INaming<TContractState> {
         sig: (felt252, felt252),
     );
 
-    fn altcoin_renew_subscription(
+    fn auto_renew_altcoin(
         ref self: TContractState,
         domain: felt252,
         days: u16,

@@ -386,7 +386,7 @@ fn test_subscription_with_strk() {
 
     // we renew domain through renewal_contract
     naming
-        .altcoin_renew_subscription(
+        .auto_renew_altcoin(
             th0rgal,
             365,
             ContractAddressZeroable::zero(),
@@ -423,7 +423,7 @@ fn test_subscription_not_whitelisted() {
 
     // we try to renew domain but we're not whitelisted
     naming
-        .altcoin_renew_subscription(
+        .auto_renew_altcoin(
             th0rgal, 365, ContractAddressZeroable::zero(), 0, 0, strk.contract_address, 1.into()
         );
 }

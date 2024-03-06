@@ -452,7 +452,7 @@ mod Naming {
             self.emit(Event::DomainRenewal(DomainRenewal { domain, new_expiry }));
         }
 
-        fn altcoin_renew_subscription(
+        fn auto_renew_altcoin(
             ref self: ContractState,
             domain: felt252,
             days: u16,
