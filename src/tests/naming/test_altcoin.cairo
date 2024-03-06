@@ -331,10 +331,6 @@ fn test_subscription_with_strk() {
             1162637274776062843434229637044893256148643831598397603392524411337131005673
         );
 
-    // we whitelist renewal contract
-    let renewal_contract = contract_address_const::<0x456>();
-    naming.whitelist_renewal_contract(renewal_contract);
-
     //we mint the ids id
     identity.mint(id1);
 
@@ -378,6 +374,10 @@ fn test_subscription_with_strk() {
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
     let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote.into();
 
+    // we whitelist renewal contract
+    let renewal_contract = contract_address_const::<0x456>();
+    naming.whitelist_renewal_contract(renewal_contract);
+
     // to test, we transfer the price of the domain in STRK to the renewal contract
     // we allow the naming to take the price of the domain in STRK
     strk.transfer(renewal_contract, price_in_strk.into());
@@ -400,4 +400,30 @@ fn test_subscription_with_strk() {
         naming.domain_to_data(array![th0rgal].span()).expiry == 2 * 365 * 86400,
         'invalid renew expiry'
     );
+}
+
+#[test]
+#[available_gas(2000000000)]
+#[should_panic(expected: ('Caller not whitelisted', 'ENTRYPOINT_FAILED'))]
+fn test_subscription_not_whitelisted() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let strk = deploy_stark();
+    let caller = contract_address_const::<0x123>();
+    set_contract_address(caller);
+    let id1: u128 = 1;
+    let th0rgal: felt252 = 33133781693;
+    naming
+        .set_server_pub_key(
+            1162637274776062843434229637044893256148643831598397603392524411337131005673
+        );
+
+    //we mint the ids id
+    identity.mint(id1);
+
+    // we try to renew domain but we're not whitelisted
+    naming
+        .altcoin_renew_subscription(
+            th0rgal, 365, ContractAddressZeroable::zero(), 0, 0, strk.contract_address, 1.into()
+        );
 }

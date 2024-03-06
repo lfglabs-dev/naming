@@ -467,7 +467,10 @@ mod Naming {
             let domain_data = self._domain_data.read(hashed_domain);
 
             // check caller is a whitelisted altcoin auto renewal contract
-            assert(self._whitelisted_renewal_contracts.read(get_caller_address()), 'Caller not whitelisted');
+            assert(
+                self._whitelisted_renewal_contracts.read(get_caller_address()),
+                'Caller not whitelisted'
+            );
 
             // we need a u256 to be able to perform safe divisions
             let domain_len = self.get_chars_len(domain.into());
