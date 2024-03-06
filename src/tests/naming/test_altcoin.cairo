@@ -315,3 +315,89 @@ fn test_hash_matches() {
         'wrong hash'
     );
 }
+
+#[test]
+#[available_gas(2000000000)]
+fn test_subscription_with_strk() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let strk = deploy_stark();
+    let caller = contract_address_const::<0x123>();
+    set_contract_address(caller);
+    let id1: u128 = 1;
+    let th0rgal: felt252 = 33133781693;
+    naming
+        .set_server_pub_key(
+            1162637274776062843434229637044893256148643831598397603392524411337131005673
+        );
+
+    // we whitelist renewal contract
+    let renewal_contract = contract_address_const::<0x456>();
+    naming.whitelist_renewal_contract(renewal_contract);
+
+    //we mint the ids id
+    identity.mint(id1);
+
+    // we check how much a domain costs
+    let quote = 5221805004292776_u128;
+    let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
+    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote.into();
+
+    // we allow the naming to take our money
+    strk.approve(naming.contract_address, price_in_strk.into());
+
+    // we buy with no resolver, no sponsor, no discount and empty metadata
+    let max_validity = 1000;
+    let sig = (
+        0x2d46882b7601332cab0b45a44c5da71d7cb8698d2aaa3eee1c777430047b4b1,
+        0x2eaebd6d46827e5bb1fd5c1a96c85f5dfbf3b77df03627545594e695867348a
+    );
+    naming
+        .altcoin_buy(
+            id1,
+            th0rgal,
+            365,
+            ContractAddressZeroable::zero(),
+            ContractAddressZeroable::zero(),
+            0,
+            0,
+            strk.contract_address,
+            quote,
+            max_validity,
+            sig
+        );
+
+    assert(strk.allowance(caller, naming.contract_address) == 0, 'allowance not reset');
+    assert(
+        naming.domain_to_address(array![th0rgal].span(), array![].span()) == caller,
+        'wrong domain target'
+    );
+
+    // we check how much a domain costs to renew
+    let quote = 1221805004292776_u128;
+    let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
+    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote.into();
+
+    // to test, we transfer the price of the domain in STRK to the renewal contract
+    // we allow the naming to take the price of the domain in STRK
+    strk.transfer(renewal_contract, price_in_strk.into());
+    set_contract_address(renewal_contract);
+    strk.approve(naming.contract_address, price_in_strk.into());
+
+    // we renew domain through renewal_contract
+    naming
+        .altcoin_renew_subscription(
+            th0rgal,
+            365,
+            ContractAddressZeroable::zero(),
+            0,
+            0,
+            strk.contract_address,
+            price_in_strk.into(),
+        );
+    assert(strk.allowance(caller, naming.contract_address) == 0, 'allowance not reset');
+    assert(
+        naming.domain_to_data(array![th0rgal].span()).expiry == 2 * 365 * 86400,
+        'invalid renew expiry'
+    );
+}

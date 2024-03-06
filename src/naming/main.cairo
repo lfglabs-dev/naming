@@ -135,6 +135,7 @@ mod Naming {
         _hash_to_domain: LegacyMap<(felt252, usize), felt252>,
         _address_to_domain: LegacyMap<(ContractAddress, usize), felt252>,
         _server_pub_key: felt252,
+        _whitelisted_renewal_contracts: LegacyMap<ContractAddress, bool>,
         #[substorage(v0)]
         storage_read: storage_read_component::Storage,
     }
@@ -451,6 +452,59 @@ mod Naming {
             self.emit(Event::DomainRenewal(DomainRenewal { domain, new_expiry }));
         }
 
+        fn altcoin_renew_subscription(
+            ref self: ContractState,
+            domain: felt252,
+            days: u16,
+            sponsor: ContractAddress,
+            discount_id: felt252,
+            metadata: felt252,
+            altcoin_addr: ContractAddress,
+            price_in_altcoin: u256,
+        ) {
+            let now = get_block_timestamp();
+            let hashed_domain = self.hash_domain(array![domain].span());
+            let domain_data = self._domain_data.read(hashed_domain);
+
+            // check caller is a whitelisted altcoin auto renewal contract
+            assert(self._whitelisted_renewal_contracts.read(get_caller_address()), 'Caller not whitelisted');
+
+            // we need a u256 to be able to perform safe divisions
+            let domain_len = self.get_chars_len(domain.into());
+            self
+                .pay_domain(
+                    domain_len,
+                    altcoin_addr,
+                    price_in_altcoin,
+                    now,
+                    days,
+                    domain,
+                    sponsor,
+                    discount_id
+                );
+            self.emit(Event::SaleMetadata(SaleMetadata { domain, metadata }));
+            // find new domain expiry
+            let new_expiry = if domain_data.expiry <= now {
+                now + 86400 * days.into()
+            } else {
+                domain_data.expiry + 86400 * days.into()
+            };
+            // 25*365 = 9125
+            assert(new_expiry <= now + 86400 * 9125, 'purchase too long');
+            assert(days >= 6 * 30, 'purchase too short');
+
+            let data = DomainData {
+                owner: domain_data.owner,
+                resolver: domain_data.resolver,
+                address: domain_data.address,
+                expiry: new_expiry,
+                key: domain_data.key,
+                parent_key: 0,
+            };
+            self._domain_data.write(hashed_domain, data);
+            self.emit(Event::DomainRenewal(DomainRenewal { domain, new_expiry }));
+        }
+
         fn transfer_domain(ref self: ContractState, domain: Span<felt252>, target_id: u128) {
             self.assert_control_domain(domain, get_caller_address());
 
@@ -646,6 +700,16 @@ mod Naming {
         fn set_server_pub_key(ref self: ContractState, new_key: felt252) {
             assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
             self._server_pub_key.write(new_key);
+        }
+
+        fn whitelist_renewal_contract(ref self: ContractState, contract: ContractAddress) {
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self._whitelisted_renewal_contracts.write(contract, true);
+        }
+
+        fn blacklist_renewal_contract(ref self: ContractState, contract: ContractAddress) {
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self._whitelisted_renewal_contracts.write(contract, false);
         }
     }
 }

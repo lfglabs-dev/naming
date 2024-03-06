@@ -69,6 +69,17 @@ trait INaming<TContractState> {
         sig: (felt252, felt252),
     );
 
+    fn altcoin_renew_subscription(
+        ref self: TContractState,
+        domain: felt252,
+        days: u16,
+        sponsor: ContractAddress,
+        discount_id: felt252,
+        metadata: felt252,
+        altcoin_addr: ContractAddress,
+        price_in_altcoin: u256,
+    );
+
     fn transfer_domain(ref self: TContractState, domain: Span<felt252>, target_id: u128);
 
     fn reset_subdomains(ref self: TContractState, domain: Span<felt252>);
@@ -101,4 +112,8 @@ trait INaming<TContractState> {
     fn upgrade(ref self: TContractState, new_class_hash: ClassHash);
 
     fn set_server_pub_key(ref self: TContractState, new_key: felt252);
+
+    fn whitelist_renewal_contract(ref self: TContractState, contract: ContractAddress);
+
+    fn blacklist_renewal_contract(ref self: TContractState, contract: ContractAddress);
 }
