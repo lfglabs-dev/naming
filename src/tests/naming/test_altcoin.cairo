@@ -31,13 +31,13 @@ fn test_convert_quote_to_eth() {
 
     // User wants to buy a domain in STRK for one year
     let domain_price_eth = Wad { val: 8999999999999875 };
-    // 1 STRK = 0,00522180500429277 ETH
-    let quote = Wad { val: 5221805004292776 };
+    // 1 ETH = 1591.2053381608991 STRK
+    let quote = Wad { val: 1591205338160899000000 };
 
     assert(
         UtilsImpl::get_altcoin_price(
             @unsafe_state, quote, domain_price_eth
-        ) == 1723541953903122668_u256,
+        ) == 14320848043447892099_u256,
         'Wrong altcoin price'
     );
 }
@@ -63,9 +63,9 @@ fn test_buy_domain_with_strk() {
     identity.mint(id1);
 
     // we check how much a domain costs
-    let quote = Wad { val: 5221805004292776};
+    let quote = Wad { val: 1591205338160899000000};
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
-    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote;
+    let price_in_strk: Wad = Wad { val: price_in_eth.low } * quote;
 
     // we allow the naming to take our money
     strk.approve(naming.contract_address, price_in_strk.into());
@@ -73,8 +73,8 @@ fn test_buy_domain_with_strk() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x2d46882b7601332cab0b45a44c5da71d7cb8698d2aaa3eee1c777430047b4b1,
-        0x2eaebd6d46827e5bb1fd5c1a96c85f5dfbf3b77df03627545594e695867348a
+        0x45bab8945c7ebe23192a98a496e1f13929ca8fc8edaf810212f0ee00aab9d1c,
+        0x17f03434193b85c7f24354e7de98e4a4bc1e5bd9d26021be3cb26b9c80b282c
     );
     naming
         .altcoin_buy(
@@ -120,9 +120,9 @@ fn test_buy_domain_altcoin_quote_expired() {
     identity.mint(id1);
 
     // we check how much a domain costs
-    let quote = Wad { val: 5221805004292776};
+    let quote = Wad { val: 1591205338160899000000};
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
-    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote;
+    let price_in_strk: Wad = Wad { val: price_in_eth.low } * quote;
 
     // we allow the naming to take our money
     strk.approve(naming.contract_address, price_in_strk.into());
@@ -130,8 +130,8 @@ fn test_buy_domain_altcoin_quote_expired() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x2d46882b7601332cab0b45a44c5da71d7cb8698d2aaa3eee1c777430047b4b1,
-        0x2eaebd6d46827e5bb1fd5c1a96c85f5dfbf3b77df03627545594e695867348a
+        0x45bab8945c7ebe23192a98a496e1f13929ca8fc8edaf810212f0ee00aab9d1c,
+        0x17f03434193b85c7f24354e7de98e4a4bc1e5bd9d26021be3cb26b9c80b282c
     );
 
     // we try buying after the max_validity timestamp
@@ -174,9 +174,9 @@ fn test_buy_domain_altcoin_wrong_quote() {
     identity.mint(id1);
 
     // we check how much a domain costs
-    let quote = Wad { val: 5221805004292776};
+    let quote = Wad { val: 1591205338160899000000};
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
-    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote;
+    let price_in_strk: Wad = Wad { val: price_in_eth.low } * quote;
 
     // we allow the naming to take our money
     strk.approve(naming.contract_address, price_in_strk.into());
@@ -184,8 +184,8 @@ fn test_buy_domain_altcoin_wrong_quote() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x2d46882b7601332cab0b45a44c5da71d7cb8698d2aaa3eee1c777430047b4b1,
-        0x2eaebd6d46827e5bb1fd5c1a96c85f5dfbf3b77df03627545594e695867348a
+        0x45bab8945c7ebe23192a98a496e1f13929ca8fc8edaf810212f0ee00aab9d1c,
+        0x17f03434193b85c7f24354e7de98e4a4bc1e5bd9d26021be3cb26b9c80b282c
     );
     // we try buying with a quote lower than the actual price
     let lower_quote = Wad { val: 1};
@@ -225,9 +225,9 @@ fn test_renew_domain_with_strk() {
     identity.mint(id1);
 
     // we check how much a domain costs
-    let quote = Wad { val: 5221805004292776};
+    let quote = Wad { val: 1591205338160899000000};
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
-    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote;
+    let price_in_strk: Wad = Wad { val: price_in_eth.low } * quote;
 
     // we allow the naming to take our money
     strk.approve(naming.contract_address, price_in_strk.into());
@@ -235,8 +235,8 @@ fn test_renew_domain_with_strk() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x2d46882b7601332cab0b45a44c5da71d7cb8698d2aaa3eee1c777430047b4b1,
-        0x2eaebd6d46827e5bb1fd5c1a96c85f5dfbf3b77df03627545594e695867348a
+        0x45bab8945c7ebe23192a98a496e1f13929ca8fc8edaf810212f0ee00aab9d1c,
+        0x17f03434193b85c7f24354e7de98e4a4bc1e5bd9d26021be3cb26b9c80b282c
     );
     naming
         .altcoin_buy(
@@ -260,9 +260,9 @@ fn test_renew_domain_with_strk() {
     );
 
     // we check how much a domain costs to renew
-    let quote = Wad { val: 1221805004292776};
+    let quote = Wad { val: 591205338160899000000};
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
-    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote;
+    let price_in_strk: Wad = Wad { val: price_in_eth.low } * quote;
 
     // we allow the naming to take our money
     strk.approve(naming.contract_address, price_in_strk.into());
@@ -270,8 +270,8 @@ fn test_renew_domain_with_strk() {
     // we renew with no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x42768490cdba55ef41ac540caab9a9ec4133b5d1f42289d2c32f5c1efc07f65,
-        0x15d56a36d5fa94dc183ef32f4f9bc3d7f0d4b68b8b07a4541cad11a8c9cf7f6
+        0x21e23b2bf772d9c088d99103daf233d279e08fd0cce6cd079c1daec5e8e0e99,
+        0x7b362f5fa5907fb805018de4361d42e887f62473d8fd84e0b207e4a9bc99aaa
     );
     naming
         .altcoin_renew(
@@ -336,9 +336,9 @@ fn test_subscription_with_strk() {
     identity.mint(id1);
 
     // we check how much a domain costs
-    let quote = Wad { val: 5221805004292776};
+    let quote = Wad { val: 1591205338160899000000};
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
-    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote;
+    let price_in_strk: Wad = Wad { val: price_in_eth.low } * quote;
 
     // we allow the naming to take our money
     strk.approve(naming.contract_address, price_in_strk.into());
@@ -346,8 +346,8 @@ fn test_subscription_with_strk() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x2d46882b7601332cab0b45a44c5da71d7cb8698d2aaa3eee1c777430047b4b1,
-        0x2eaebd6d46827e5bb1fd5c1a96c85f5dfbf3b77df03627545594e695867348a
+        0x45bab8945c7ebe23192a98a496e1f13929ca8fc8edaf810212f0ee00aab9d1c,
+        0x17f03434193b85c7f24354e7de98e4a4bc1e5bd9d26021be3cb26b9c80b282c
     );
     naming
         .altcoin_buy(
@@ -371,9 +371,9 @@ fn test_subscription_with_strk() {
     );
 
     // we check how much a domain costs to renew
-    let quote = Wad { val: 1221805004292776};
+    let quote = Wad { val: 591205338160899000000};
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
-    let price_in_strk: Wad = Wad { val: price_in_eth.low } / quote;
+    let price_in_strk: Wad = Wad { val: price_in_eth.low } * quote;
 
     // we whitelist renewal contract
     let renewal_contract = contract_address_const::<0x456>();

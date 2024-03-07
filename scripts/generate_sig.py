@@ -8,7 +8,7 @@ print("pub_key:", hex(pub_key))
 
 user_addr = 0x123
 erc20_addr = 0x5
-quote = 1221805004292776
+quote = 591205338160899000000
 max_validity = 1000
 encoded_string = 724720344857006587549020016926517802128122613457935427138661
 data = pedersen_hash(pedersen_hash(pedersen_hash(erc20_addr, quote), max_validity), encoded_string)

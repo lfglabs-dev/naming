@@ -62,6 +62,6 @@ impl UtilsImpl of UtilsTrait {
     fn get_altcoin_price(
         self: @Naming::ContractState, altcoin_quote: Wad, domain_price_eth: Wad
     ) -> u256 {
-        (domain_price_eth / altcoin_quote).into()
+        (domain_price_eth * altcoin_quote).into()
     }
 }
