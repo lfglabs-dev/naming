@@ -287,7 +287,7 @@ mod Naming {
             discount_id: felt252,
             metadata: felt252,
             altcoin_addr: ContractAddress,
-            quote: u128,
+            quote: Wad,
             max_validity: u64,
             sig: (felt252, felt252),
         ) {
@@ -318,7 +318,7 @@ mod Naming {
                 .compute_buy_price(domain_len, days);
             // compute domain cost in altcoin
             let price_in_altcoin = self
-                .get_altcoin_price(quote.into(), price_in_eth.try_into().unwrap());
+                .get_altcoin_price(quote, price_in_eth.try_into().unwrap());
             self
                 .pay_domain(
                     domain_len,
@@ -385,7 +385,7 @@ mod Naming {
             discount_id: felt252,
             metadata: felt252,
             altcoin_addr: ContractAddress,
-            quote: u128,
+            quote: Wad,
             max_validity: u64,
             sig: (felt252, felt252),
         ) {
@@ -417,7 +417,7 @@ mod Naming {
                 .compute_renew_price(domain_len, days);
             // compute domain cost in altcoin
             let price_in_altcoin = self
-                .get_altcoin_price(quote.into(), price_in_eth.try_into().unwrap());
+                .get_altcoin_price(quote, price_in_eth.try_into().unwrap());
             self
                 .pay_domain(
                     domain_len,
