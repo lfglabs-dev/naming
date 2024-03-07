@@ -492,9 +492,6 @@ mod Naming {
             } else {
                 domain_data.expiry + 86400 * days.into()
             };
-            // 25*365 = 9125
-            assert(new_expiry <= now + 86400 * 9125, 'purchase too long');
-            assert(days >= 6 * 30, 'purchase too short');
 
             let data = DomainData {
                 owner: domain_data.owner,
