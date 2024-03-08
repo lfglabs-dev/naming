@@ -3,6 +3,7 @@ use naming::{
     naming::main::{Naming, Naming::{_hash_to_domain, _hash_to_domainContractMemberStateTrait}}
 };
 use integer::{u256_safe_divmod, u256_as_non_zero};
+use wadray::{Wad, WAD_SCALE};
 
 #[generate_trait]
 impl UtilsImpl of UtilsTrait {
@@ -56,5 +57,11 @@ impl UtilsImpl of UtilsTrait {
         };
         let next = self.get_chars_len(p);
         1 + next
+    }
+
+    fn get_altcoin_price(
+        self: @Naming::ContractState, altcoin_quote: Wad, domain_price_eth: Wad
+    ) -> u256 {
+        (domain_price_eth * altcoin_quote).into()
     }
 }

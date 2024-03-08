@@ -11,11 +11,11 @@ mod Pricing {
 
     #[storage]
     struct Storage {
-        erc20: ContractAddress, 
+        erc20: ContractAddress,
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, erc20_address: ContractAddress, ) {
+    fn constructor(ref self: ContractState, erc20_address: ContractAddress,) {
         self.erc20.write(erc20_address);
     }
 
@@ -25,9 +25,8 @@ mod Pricing {
             self: @ContractState, domain_len: usize, days: u16
         ) -> (ContractAddress, u256) {
             (
-                self.erc20.read(), u256 {
-                    low: self.get_price_per_day(domain_len) * days.into(), high: 0
-                }
+                self.erc20.read(),
+                u256 { low: self.get_price_per_day(domain_len) * days.into(), high: 0 }
             )
         }
 
@@ -35,9 +34,8 @@ mod Pricing {
             self: @ContractState, domain_len: usize, days: u16
         ) -> (ContractAddress, u256) {
             (
-                self.erc20.read(), u256 {
-                    low: self.get_price_per_day(domain_len) * days.into(), high: 0
-                }
+                self.erc20.read(),
+                u256 { low: self.get_price_per_day(domain_len) * days.into(), high: 0 }
             )
         }
     }

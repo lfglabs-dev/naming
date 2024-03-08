@@ -79,3 +79,9 @@ fn deploy() -> (IERC20CamelDispatcher, IPricingDispatcher, IIdentityDispatcher, 
         INamingDispatcher { contract_address: address }
     )
 }
+
+fn deploy_stark() -> IERC20CamelDispatcher {
+    //erc20
+    let stark = utils::deploy(ERC20::TEST_CLASS_HASH, array![]);
+    IERC20CamelDispatcher { contract_address: stark }
+}
