@@ -240,14 +240,22 @@ mod Naming {
                     contract_address: self.starknetid_contract.read()
                 };
                 let id = identity.get_main_id(address);
-                assert(id != 0, 'an id cannot be null');
+                // todo: revert when try catch are available
+                // assert(id != 0, 'an id cannot be null');
+                if id == 0 {
+                    return array![].span();
+                }
                 let id_hashed_domain = identity
                     .get_verifier_data(id, 'name', get_contract_address(), 0);
                 let domain = self.unhash_domain(id_hashed_domain);
-                assert(
-                    self.domain_to_address(domain, array![].span()) == address,
-                    'domain not pointing back'
-                );
+                // todo: revert when try catch are available
+                // assert(
+                //     self.domain_to_address(domain, array![].span()) == address,
+                //     'domain not pointing back'
+                // );
+                if self.domain_to_address(domain, array![].span()) != address {
+                    return array![].span();
+                }
                 domain
             }
         }
@@ -317,8 +325,7 @@ mod Naming {
             }
                 .compute_buy_price(domain_len, days);
             // compute domain cost in altcoin
-            let price_in_altcoin = self
-                .get_altcoin_price(quote, price_in_eth.try_into().unwrap());
+            let price_in_altcoin = self.get_altcoin_price(quote, price_in_eth.try_into().unwrap());
             self
                 .pay_domain(
                     domain_len,
@@ -416,8 +423,7 @@ mod Naming {
             }
                 .compute_renew_price(domain_len, days);
             // compute domain cost in altcoin
-            let price_in_altcoin = self
-                .get_altcoin_price(quote, price_in_eth.try_into().unwrap());
+            let price_in_altcoin = self.get_altcoin_price(quote, price_in_eth.try_into().unwrap());
             self
                 .pay_domain(
                     domain_len,
