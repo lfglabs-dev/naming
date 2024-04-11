@@ -257,18 +257,18 @@ fn test_set_address_to_domain() {
 
     // set reverse resolving
     identity.set_main_id(id1);
-    let expect_domain1 = naming.address_to_domain(caller);
+    let expect_domain1 = naming.address_to_domain(caller, array![].span());
     assert(expect_domain1 == first_domain, 'wrong rev resolving 1');
 
     // override reverse resolving
     let second_domain = array![second_domain_top].span();
-    naming.set_address_to_domain(second_domain);
-    let expect_domain2 = naming.address_to_domain(caller);
+    naming.set_address_to_domain(second_domain, array![].span());
+    let expect_domain2 = naming.address_to_domain(caller, array![].span());
     assert(expect_domain2 == second_domain, 'wrong rev resolving 2');
 
     // remove override
     naming.reset_address_to_domain();
-    let expect_domain1 = naming.address_to_domain(caller);
+    let expect_domain1 = naming.address_to_domain(caller, array![].span());
     assert(expect_domain1 == first_domain, 'wrong rev resolving b');
 }
 
