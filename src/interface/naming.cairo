@@ -19,7 +19,7 @@ trait INaming<TContractState> {
         self: @TContractState, domain: Span<felt252>, hint: Span<felt252>
     ) -> ContractAddress;
 
-    fn address_to_domain(self: @TContractState, address: ContractAddress) -> Span<felt252>;
+    fn address_to_domain(self: @TContractState, address: ContractAddress, hint: Span<felt252>) -> Span<felt252>;
 
     // external
     fn buy(
@@ -85,7 +85,7 @@ trait INaming<TContractState> {
 
     fn reset_subdomains(ref self: TContractState, domain: Span<felt252>);
 
-    fn set_address_to_domain(ref self: TContractState, domain: Span<felt252>);
+    fn set_address_to_domain(ref self: TContractState, domain: Span<felt252>, hint: Span<felt252>);
 
     fn clear_legacy_domain_to_address(ref self: TContractState, domain: Span<felt252>);
 
