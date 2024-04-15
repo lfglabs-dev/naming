@@ -216,9 +216,6 @@ mod Naming {
         // This returns the identity (StarknetID) owning the domain
         fn domain_to_id(self: @ContractState, domain: Span<felt252>) -> u128 {
             let data = self._domain_data.read(self.hash_domain(domain));
-            if domain.len() == 0 {
-                return 0;
-            };
             if domain.len() != 1 {
                 let parent_key = self
                     ._domain_data
