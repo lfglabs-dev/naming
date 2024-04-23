@@ -1,7 +1,5 @@
 use core::array::SpanTrait;
-use naming::{
-    naming::main::{Naming, Naming::{_hash_to_domain, _hash_to_domainContractMemberStateTrait}}
-};
+use naming::{naming::main::{Naming, Naming::_hash_to_domainContractMemberStateTrait}};
 use integer::{u256_safe_divmod, u256_as_non_zero};
 use wadray::{Wad, WAD_SCALE};
 

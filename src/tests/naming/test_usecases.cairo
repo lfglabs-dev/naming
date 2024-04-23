@@ -177,7 +177,7 @@ fn test_non_owner_can_renew_domain() {
     set_contract_address(caller_owner);
 
     let id_owner = 1;
-    let id_not_owner = 2;
+    let _id_not_owner = 2;
     let domain_name: felt252 = 33133781693; // e.g., th0rgal
 
     // Buy for owner

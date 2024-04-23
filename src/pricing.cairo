@@ -19,7 +19,7 @@ mod Pricing {
         self.erc20.write(erc20_address);
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl PricingImpl of IPricing<ContractState> {
         fn compute_buy_price(
             self: @ContractState, domain_len: usize, days: u16

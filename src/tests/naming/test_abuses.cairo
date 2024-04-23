@@ -23,7 +23,7 @@ use super::common::deploy;
 
 #[test]
 #[available_gas(2000000000)]
-#[should_panic(expected: ('u256_sub Overflow', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('ERC20: insufficient balance', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED'))]
 fn test_not_enough_eth() {
     // setup
     let (eth, pricing, identity, naming) = deploy();
