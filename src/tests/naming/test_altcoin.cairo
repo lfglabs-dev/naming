@@ -70,8 +70,8 @@ fn test_buy_domain_with_strk() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x380014a735801c32a57b9aca8c31cfdddbcf4bb2823d911342c79cd705a8f98,
-        0x37e305d35b5a3359e99633c22f1e9b4ab14ae9e5d94d8a8618ea3f33473853b
+        0x6a15a81ccdb2deaa9038e92fd276584fcb7a5849ab959132c4c493f89559059,
+        0x776e83e71aa21170dbacbd74d5e3c518acf073230fcca9900b3a5064da3d234
     );
     naming
         .altcoin_buy(
@@ -124,8 +124,8 @@ fn test_buy_domain_altcoin_quote_expired() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x380014a735801c32a57b9aca8c31cfdddbcf4bb2823d911342c79cd705a8f98,
-        0x37e305d35b5a3359e99633c22f1e9b4ab14ae9e5d94d8a8618ea3f33473853b
+        0x6a15a81ccdb2deaa9038e92fd276584fcb7a5849ab959132c4c493f89559059,
+        0x776e83e71aa21170dbacbd74d5e3c518acf073230fcca9900b3a5064da3d234
     );
 
     // we try buying after the max_validity timestamp
@@ -175,8 +175,8 @@ fn test_buy_domain_altcoin_wrong_quote() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x380014a735801c32a57b9aca8c31cfdddbcf4bb2823d911342c79cd705a8f98,
-        0x37e305d35b5a3359e99633c22f1e9b4ab14ae9e5d94d8a8618ea3f33473853b
+        0x6a15a81ccdb2deaa9038e92fd276584fcb7a5849ab959132c4c493f89559059,
+        0x776e83e71aa21170dbacbd74d5e3c518acf073230fcca9900b3a5064da3d234
     );
     // we try buying with a quote lower than the actual price
     let lower_quote = Wad { val: 1 };
@@ -223,8 +223,8 @@ fn test_renew_domain_with_strk() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x380014a735801c32a57b9aca8c31cfdddbcf4bb2823d911342c79cd705a8f98,
-        0x37e305d35b5a3359e99633c22f1e9b4ab14ae9e5d94d8a8618ea3f33473853b
+        0x6a15a81ccdb2deaa9038e92fd276584fcb7a5849ab959132c4c493f89559059,
+        0x776e83e71aa21170dbacbd74d5e3c518acf073230fcca9900b3a5064da3d234
     );
     naming
         .altcoin_buy(
@@ -258,8 +258,8 @@ fn test_renew_domain_with_strk() {
     // we renew with no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x2e5e08c29c19cbfe55a5ab8386e583d10a72ccda720149f9ca46ac29caa4f70,
-        0x3e9f394c968d48e1b2fc862c6cf5a7970501b375828aacc070e73ad757b18b6
+        0x1ac9f5e9a0239efa0efc9526db0cd650924b8b48b595cd9674a19eab84df962,
+        0x1b78eabc5979b18e44ba4a2350de2597b9403b3777f54220fdf404c08933105
     );
     naming
         .altcoin_renew(
@@ -331,8 +331,8 @@ fn test_subscription_with_strk() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x380014a735801c32a57b9aca8c31cfdddbcf4bb2823d911342c79cd705a8f98,
-        0x37e305d35b5a3359e99633c22f1e9b4ab14ae9e5d94d8a8618ea3f33473853b
+        0x6a15a81ccdb2deaa9038e92fd276584fcb7a5849ab959132c4c493f89559059,
+        0x776e83e71aa21170dbacbd74d5e3c518acf073230fcca9900b3a5064da3d234
     );
     naming
         .altcoin_buy(
