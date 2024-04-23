@@ -27,30 +27,30 @@ fn test_buy_price() {
     assert(price == 390000000000000180, 'incorrect price');
 
     // Test with "be" / 2 letters and one year
-    let (erc20, price) = pricing.compute_buy_price(2, 365);
+    let (_erc20, price) = pricing.compute_buy_price(2, 365);
     assert(price == 240000000000000195, 'incorrect price');
 
     // Test with "ben" / 3 letters and one year
-    let (erc20, price) = pricing.compute_buy_price(3, 365);
+    let (_erc20, price) = pricing.compute_buy_price(3, 365);
     assert(price == 73000000000000000, 'incorrect price');
 
     // Test with "benj" / 4 letters and one year
-    let (erc20, price) = pricing.compute_buy_price(4, 365);
+    let (_erc20, price) = pricing.compute_buy_price(4, 365);
     assert(price == 26999999999999990, 'incorrect price');
 
     // Test with "chocolate" / 9 letters and one year
-    let (erc20, price) = pricing.compute_buy_price(9, 365);
+    let (_erc20, price) = pricing.compute_buy_price(9, 365);
     assert(price == 24657534246575 * 365, 'incorrect price');
 
     // Test with "chocolate" / 9 letters and 5 years
-    let (erc20, price) = pricing.compute_buy_price(9, 1825);
+    let (_erc20, price) = pricing.compute_buy_price(9, 1825);
     assert(price == 24657534246575 * 1825, 'incorrect price');
 
     // Test with "chocolate" / 9 letters and 3 years
-    let (erc20, price) = pricing.compute_buy_price(9, 1095);
+    let (_erc20, price) = pricing.compute_buy_price(9, 1095);
     assert(price == 24657534246575 * 1095, 'incorrect price');
 
     // Test with "chocolate" / 9 letters and 20 years
-    let (erc20, price) = pricing.compute_buy_price(9, 7300);
+    let (_erc20, price) = pricing.compute_buy_price(9, 7300);
     assert(price == 24657534246575 * 7300, 'incorrect price');
 }

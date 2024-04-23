@@ -159,7 +159,7 @@ mod Naming {
     #[abi(embed_v0)]
     impl StorageReadComponent = storage_read_component::StorageRead<ContractState>;
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl NamingImpl of INaming<ContractState> {
         // VIEW
 
@@ -233,11 +233,12 @@ mod Naming {
         }
 
         // This function allows to find which domain to use to display an account
-        fn address_to_domain(self: @ContractState, address: ContractAddress, hint: Span<felt252>) -> Span<felt252> {
+        fn address_to_domain(
+            self: @ContractState, address: ContractAddress, hint: Span<felt252>
+        ) -> Span<felt252> {
             let mut domain = ArrayTrait::new();
             self.read_address_to_domain(address, ref domain);
-            if domain.len() != 0
-                && self.domain_to_address(domain.span(), hint) == address {
+            if domain.len() != 0 && self.domain_to_address(domain.span(), hint) == address {
                 domain.span()
             } else {
                 let identity = IIdentityDispatcher {
@@ -583,12 +584,11 @@ mod Naming {
 
 
         // will override your main id
-        fn set_address_to_domain(ref self: ContractState, domain: Span<felt252>, hint: Span<felt252>) {
+        fn set_address_to_domain(
+            ref self: ContractState, domain: Span<felt252>, hint: Span<felt252>
+        ) {
             let address = get_caller_address();
-            assert(
-                self.domain_to_address(domain, hint) == address,
-                'domain not pointing back'
-            );
+            assert(self.domain_to_address(domain, hint) == address, 'domain not pointing back');
             self.emit(Event::AddressToDomainUpdate(AddressToDomainUpdate { address, domain }));
             self.set_address_to_domain_util(address, domain);
         }

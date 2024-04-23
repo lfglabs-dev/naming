@@ -46,24 +46,21 @@ fn test_convert_quote_to_eth() {
 #[available_gas(2000000000)]
 fn test_buy_domain_with_strk() {
     // setup
-    let (eth, pricing, identity, naming) = deploy();
+    let (_eth, pricing, identity, naming) = deploy();
     let strk = deploy_stark();
     let caller = contract_address_const::<0x123>();
     set_contract_address(caller);
     let id1: u128 = 1;
     let th0rgal: felt252 = 33133781693;
 
-    naming
-        .set_server_pub_key(
-            1162637274776062843434229637044893256148643831598397603392524411337131005673
-        );
+    naming.set_server_pub_key(0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca);
     set_block_timestamp(500);
 
     //we mint the ids id
     identity.mint(id1);
 
     // we check how much a domain costs
-    let quote = Wad { val: 1591205338160899000000};
+    let quote = Wad { val: 1591205338160899000000 };
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
     let price_in_strk: Wad = Wad { val: price_in_eth.low } * quote;
 
@@ -73,8 +70,8 @@ fn test_buy_domain_with_strk() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x45bab8945c7ebe23192a98a496e1f13929ca8fc8edaf810212f0ee00aab9d1c,
-        0x17f03434193b85c7f24354e7de98e4a4bc1e5bd9d26021be3cb26b9c80b282c
+        0x380014a735801c32a57b9aca8c31cfdddbcf4bb2823d911342c79cd705a8f98,
+        0x37e305d35b5a3359e99633c22f1e9b4ab14ae9e5d94d8a8618ea3f33473853b
     );
     naming
         .altcoin_buy(
@@ -103,24 +100,21 @@ fn test_buy_domain_with_strk() {
 #[should_panic(expected: ('quotation expired', 'ENTRYPOINT_FAILED'))]
 fn test_buy_domain_altcoin_quote_expired() {
     // setup
-    let (eth, pricing, identity, naming) = deploy();
+    let (_eth, pricing, identity, naming) = deploy();
     let strk = deploy_stark();
     let caller = contract_address_const::<0x123>();
     set_contract_address(caller);
     let id1: u128 = 1;
     let th0rgal: felt252 = 33133781693;
 
-    naming
-        .set_server_pub_key(
-            1162637274776062843434229637044893256148643831598397603392524411337131005673
-        );
+    naming.set_server_pub_key(0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca);
     set_block_timestamp(500);
 
     //we mint the ids id
     identity.mint(id1);
 
     // we check how much a domain costs
-    let quote = Wad { val: 1591205338160899000000};
+    let quote = Wad { val: 1591205338160899000000 };
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
     let price_in_strk: Wad = Wad { val: price_in_eth.low } * quote;
 
@@ -130,8 +124,8 @@ fn test_buy_domain_altcoin_quote_expired() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x45bab8945c7ebe23192a98a496e1f13929ca8fc8edaf810212f0ee00aab9d1c,
-        0x17f03434193b85c7f24354e7de98e4a4bc1e5bd9d26021be3cb26b9c80b282c
+        0x380014a735801c32a57b9aca8c31cfdddbcf4bb2823d911342c79cd705a8f98,
+        0x37e305d35b5a3359e99633c22f1e9b4ab14ae9e5d94d8a8618ea3f33473853b
     );
 
     // we try buying after the max_validity timestamp
@@ -157,24 +151,21 @@ fn test_buy_domain_altcoin_quote_expired() {
 #[should_panic(expected: ('Invalid signature', 'ENTRYPOINT_FAILED'))]
 fn test_buy_domain_altcoin_wrong_quote() {
     // setup
-    let (eth, pricing, identity, naming) = deploy();
+    let (_eth, pricing, identity, naming) = deploy();
     let strk = deploy_stark();
     let caller = contract_address_const::<0x123>();
     set_contract_address(caller);
     let id1: u128 = 1;
     let th0rgal: felt252 = 33133781693;
 
-    naming
-        .set_server_pub_key(
-            1162637274776062843434229637044893256148643831598397603392524411337131005673
-        );
+    naming.set_server_pub_key(0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca);
     set_block_timestamp(500);
 
     //we mint the ids id
     identity.mint(id1);
 
     // we check how much a domain costs
-    let quote = Wad { val: 1591205338160899000000};
+    let quote = Wad { val: 1591205338160899000000 };
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
     let price_in_strk: Wad = Wad { val: price_in_eth.low } * quote;
 
@@ -184,11 +175,11 @@ fn test_buy_domain_altcoin_wrong_quote() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x45bab8945c7ebe23192a98a496e1f13929ca8fc8edaf810212f0ee00aab9d1c,
-        0x17f03434193b85c7f24354e7de98e4a4bc1e5bd9d26021be3cb26b9c80b282c
+        0x380014a735801c32a57b9aca8c31cfdddbcf4bb2823d911342c79cd705a8f98,
+        0x37e305d35b5a3359e99633c22f1e9b4ab14ae9e5d94d8a8618ea3f33473853b
     );
     // we try buying with a quote lower than the actual price
-    let lower_quote = Wad { val: 1};
+    let lower_quote = Wad { val: 1 };
     naming
         .altcoin_buy(
             id1,
@@ -209,23 +200,20 @@ fn test_buy_domain_altcoin_wrong_quote() {
 #[available_gas(2000000000)]
 fn test_renew_domain_with_strk() {
     // setup
-    let (eth, pricing, identity, naming) = deploy();
+    let (_eth, pricing, identity, naming) = deploy();
     let strk = deploy_stark();
     let caller = contract_address_const::<0x123>();
     set_contract_address(caller);
     let id1: u128 = 1;
     let th0rgal: felt252 = 33133781693;
 
-    naming
-        .set_server_pub_key(
-            1162637274776062843434229637044893256148643831598397603392524411337131005673
-        );
+    naming.set_server_pub_key(0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca);
 
     //we mint the ids id
     identity.mint(id1);
 
     // we check how much a domain costs
-    let quote = Wad { val: 1591205338160899000000};
+    let quote = Wad { val: 1591205338160899000000 };
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
     let price_in_strk: Wad = Wad { val: price_in_eth.low } * quote;
 
@@ -235,8 +223,8 @@ fn test_renew_domain_with_strk() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x45bab8945c7ebe23192a98a496e1f13929ca8fc8edaf810212f0ee00aab9d1c,
-        0x17f03434193b85c7f24354e7de98e4a4bc1e5bd9d26021be3cb26b9c80b282c
+        0x380014a735801c32a57b9aca8c31cfdddbcf4bb2823d911342c79cd705a8f98,
+        0x37e305d35b5a3359e99633c22f1e9b4ab14ae9e5d94d8a8618ea3f33473853b
     );
     naming
         .altcoin_buy(
@@ -260,7 +248,7 @@ fn test_renew_domain_with_strk() {
     );
 
     // we check how much a domain costs to renew
-    let quote = Wad { val: 591205338160899000000};
+    let quote = Wad { val: 591205338160899000000 };
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
     let price_in_strk: Wad = Wad { val: price_in_eth.low } * quote;
 
@@ -270,8 +258,8 @@ fn test_renew_domain_with_strk() {
     // we renew with no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x21e23b2bf772d9c088d99103daf233d279e08fd0cce6cd079c1daec5e8e0e99,
-        0x7b362f5fa5907fb805018de4361d42e887f62473d8fd84e0b207e4a9bc99aaa
+        0x2e5e08c29c19cbfe55a5ab8386e583d10a72ccda720149f9ca46ac29caa4f70,
+        0x3e9f394c968d48e1b2fc862c6cf5a7970501b375828aacc070e73ad757b18b6
     );
     naming
         .altcoin_renew(
@@ -321,22 +309,19 @@ fn test_hash_matches() {
 #[available_gas(2000000000)]
 fn test_subscription_with_strk() {
     // setup
-    let (eth, pricing, identity, naming) = deploy();
+    let (_eth, pricing, identity, naming) = deploy();
     let strk = deploy_stark();
     let caller = contract_address_const::<0x123>();
     set_contract_address(caller);
     let id1: u128 = 1;
     let th0rgal: felt252 = 33133781693;
-    naming
-        .set_server_pub_key(
-            1162637274776062843434229637044893256148643831598397603392524411337131005673
-        );
+    naming.set_server_pub_key(0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca);
 
     //we mint the ids id
     identity.mint(id1);
 
     // we check how much a domain costs
-    let quote = Wad { val: 1591205338160899000000};
+    let quote = Wad { val: 1591205338160899000000 };
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
     let price_in_strk: Wad = Wad { val: price_in_eth.low } * quote;
 
@@ -346,8 +331,8 @@ fn test_subscription_with_strk() {
     // we buy with no resolver, no sponsor, no discount and empty metadata
     let max_validity = 1000;
     let sig = (
-        0x45bab8945c7ebe23192a98a496e1f13929ca8fc8edaf810212f0ee00aab9d1c,
-        0x17f03434193b85c7f24354e7de98e4a4bc1e5bd9d26021be3cb26b9c80b282c
+        0x380014a735801c32a57b9aca8c31cfdddbcf4bb2823d911342c79cd705a8f98,
+        0x37e305d35b5a3359e99633c22f1e9b4ab14ae9e5d94d8a8618ea3f33473853b
     );
     naming
         .altcoin_buy(
@@ -371,7 +356,7 @@ fn test_subscription_with_strk() {
     );
 
     // we check how much a domain costs to renew
-    let quote = Wad { val: 591205338160899000000};
+    let quote = Wad { val: 591205338160899000000 };
     let (_, price_in_eth) = pricing.compute_buy_price(7, 365);
     let price_in_strk: Wad = Wad { val: price_in_eth.low } * quote;
 
@@ -408,16 +393,13 @@ fn test_subscription_with_strk() {
 #[should_panic(expected: ('Caller not whitelisted', 'ENTRYPOINT_FAILED'))]
 fn test_subscription_not_whitelisted() {
     // setup
-    let (eth, pricing, identity, naming) = deploy();
+    let (_eth, _pricing, identity, naming) = deploy();
     let strk = deploy_stark();
     let caller = contract_address_const::<0x123>();
     set_contract_address(caller);
     let id1: u128 = 1;
     let th0rgal: felt252 = 33133781693;
-    naming
-        .set_server_pub_key(
-            1162637274776062843434229637044893256148643831598397603392524411337131005673
-        );
+    naming.set_server_pub_key(0x1ef15c18599971b7beced415a40f0c7deacfd9b0d1819e03d723d8bc943cfca);
 
     //we mint the ids id
     identity.mint(id1);

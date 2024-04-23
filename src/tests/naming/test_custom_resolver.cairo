@@ -32,7 +32,7 @@ mod CustomResolver {
     struct Storage {}
 
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl AdditionResolveImpl of IResolver<ContractState> {
         fn resolve(
             self: @ContractState, mut domain: Span<felt252>, field: felt252, hint: Span<felt252>
