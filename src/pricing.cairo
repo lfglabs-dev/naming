@@ -44,7 +44,7 @@ mod Pricing {
     impl InternalImpl of InternalTrait {
         fn get_price_per_day(self: @ContractState, domain_len: usize) -> u128 {
             if domain_len == 1 {
-                return 1068493150684932;
+                return 534246575342466;
             }
 
             if domain_len == 2 {
@@ -52,11 +52,11 @@ mod Pricing {
             }
 
             if domain_len == 3 {
-                return 200000000000000;
+                return 160000000000000;
             }
 
             if domain_len == 4 {
-                return 73972602739726;
+                return 36986301369863;
             }
 
             return 24657534246575;
