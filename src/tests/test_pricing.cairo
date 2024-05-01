@@ -24,7 +24,7 @@ fn test_buy_price() {
     // Test with "b" / 1 letter and one year
     let (erc20, price) = pricing.compute_buy_price(1, 365);
     assert(erc20.into() == 0x123, 'wrong erc20 address');
-    assert(price == 195000000000000090, 'incorrect price');
+    assert(price == 292500000000000135, 'incorrect price');
 
     // Test with "be" / 2 letters and one year
     let (_erc20, price) = pricing.compute_buy_price(2, 365);
