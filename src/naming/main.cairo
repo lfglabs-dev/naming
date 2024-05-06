@@ -139,6 +139,7 @@ mod Naming {
         _whitelisted_renewal_contracts: LegacyMap<ContractAddress, bool>,
         // a for alpha, as we will probably do this campaign again in the future
         _ar_discount_blacklist_a: LegacyMap<felt252, bool>,
+        _ar_discount_renew_enabled: bool,
         #[substorage(v0)]
         storage_read: storage_read_component::Storage,
     }
@@ -469,7 +470,10 @@ mod Naming {
         fn ar_discount_renew(
             ref self: ContractState, domain: felt252, ar_contract: ContractAddress,
         ) {
-            // First we check that domain didn't already claim the discount
+            // First we check the discount is enabled
+            assert(self._ar_discount_renew_enabled.read(), 'Discount disabled');
+
+            // We check that domain didn't already claim the discount
             assert(!self._ar_discount_blacklist_a.read(domain), 'You can\'t claim this twice');
 
             // We check it's a valid AR contract, then we check that AR is enabled,
@@ -767,6 +771,12 @@ mod Naming {
         fn blacklist_renewal_contract(ref self: ContractState, contract: ContractAddress) {
             assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
             self._whitelisted_renewal_contracts.write(contract, false);
+        }
+
+
+        fn toggle_ar_discount_renew(ref self: ContractState) {
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self._ar_discount_renew_enabled.write(!self._ar_discount_renew_enabled.read());
         }
     }
 }
