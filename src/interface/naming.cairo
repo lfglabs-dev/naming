@@ -19,7 +19,9 @@ trait INaming<TContractState> {
         self: @TContractState, domain: Span<felt252>, hint: Span<felt252>
     ) -> ContractAddress;
 
-    fn address_to_domain(self: @TContractState, address: ContractAddress, hint: Span<felt252>) -> Span<felt252>;
+    fn address_to_domain(
+        self: @TContractState, address: ContractAddress, hint: Span<felt252>
+    ) -> Span<felt252>;
 
     // external
     fn buy(
@@ -70,6 +72,8 @@ trait INaming<TContractState> {
         sig: (felt252, felt252),
     );
 
+    fn ar_discount_renew(ref self: TContractState, domain: felt252, ar_contract: ContractAddress,);
+
     fn auto_renew_altcoin(
         ref self: TContractState,
         domain: felt252,
@@ -117,4 +121,7 @@ trait INaming<TContractState> {
     fn whitelist_renewal_contract(ref self: TContractState, contract: ContractAddress);
 
     fn blacklist_renewal_contract(ref self: TContractState, contract: ContractAddress);
+
+    fn toggle_ar_discount_renew(ref self: TContractState);
+
 }

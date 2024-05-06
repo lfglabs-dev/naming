@@ -20,6 +20,7 @@ mod Naming {
             resolver::{IResolver, IResolverDispatcher, IResolverDispatcherTrait},
             pricing::{IPricing, IPricingDispatcher, IPricingDispatcherTrait},
             referral::{IReferral, IReferralDispatcher, IReferralDispatcherTrait},
+            auto_renewal::{IAutoRenewal, IAutoRenewalDispatcher, IAutoRenewalDispatcherTrait}
         }
     };
     use clone::Clone;
@@ -136,6 +137,9 @@ mod Naming {
         _address_to_domain: LegacyMap<(ContractAddress, usize), felt252>,
         _server_pub_key: felt252,
         _whitelisted_renewal_contracts: LegacyMap<ContractAddress, bool>,
+        // a for alpha, as we will probably do this campaign again in the future
+        _ar_discount_blacklist_a: LegacyMap<felt252, bool>,
+        _ar_discount_renew_enabled: bool,
         #[substorage(v0)]
         storage_read: storage_read_component::Storage,
     }
@@ -463,6 +467,53 @@ mod Naming {
             self.emit(Event::DomainRenewal(DomainRenewal { domain, new_expiry }));
         }
 
+        fn ar_discount_renew(
+            ref self: ContractState, domain: felt252, ar_contract: ContractAddress,
+        ) {
+            // First we check the discount is enabled
+            assert(self._ar_discount_renew_enabled.read(), 'Discount disabled');
+
+            // We check that domain didn't already claim the discount
+            assert(!self._ar_discount_blacklist_a.read(domain), 'You can\'t claim this twice');
+
+            // We check it's a valid AR contract, then we check that AR is enabled,
+            // we don't validate the pricing because it could change
+            assert(self._whitelisted_renewal_contracts.read(ar_contract), 'AR not whitelisted');
+            let auto_renewal_dispatcher = IAutoRenewalDispatcher { contract_address: ar_contract };
+            let caller = get_caller_address();
+            let ar_allowance = auto_renewal_dispatcher.get_renewing_allowance(domain, caller);
+            assert(ar_allowance != 0, 'Invalid AR allowance');
+            let (_, erc20, _) = auto_renewal_dispatcher.get_contracts();
+            let erc20_allowance = IERC20CamelDispatcher { contract_address: erc20 }
+                .allowance(caller, ar_contract);
+            assert(erc20_allowance != 0, 'Invalid ERC20 allowance');
+
+            // We then blacklist that domain for this discount
+            self._ar_discount_blacklist_a.write(domain, true);
+
+            // We can finally renew the domain with no SaleMetadata event since it's free
+            let now = get_block_timestamp();
+            let hashed_domain = self.hash_domain(array![domain].span());
+            let domain_data = self._domain_data.read(hashed_domain);
+            // we extended its expiry by 90 days (~3 months)
+            let new_expiry = if domain_data.expiry <= now {
+                now + 86400 * 90
+            } else {
+                domain_data.expiry + 86400 * 90
+            };
+
+            let data = DomainData {
+                owner: domain_data.owner,
+                resolver: domain_data.resolver,
+                address: domain_data.address,
+                expiry: new_expiry,
+                key: domain_data.key,
+                parent_key: 0,
+            };
+            self._domain_data.write(hashed_domain, data);
+            self.emit(Event::DomainRenewal(DomainRenewal { domain, new_expiry }));
+        }
+
         fn auto_renew_altcoin(
             ref self: ContractState,
             domain: felt252,
@@ -720,6 +771,12 @@ mod Naming {
         fn blacklist_renewal_contract(ref self: ContractState, contract: ContractAddress) {
             assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
             self._whitelisted_renewal_contracts.write(contract, false);
+        }
+
+
+        fn toggle_ar_discount_renew(ref self: ContractState) {
+            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self._ar_discount_renew_enabled.write(!self._ar_discount_renew_enabled.read());
         }
     }
 }
