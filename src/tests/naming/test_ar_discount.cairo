@@ -136,7 +136,7 @@ fn test_ar_discount_not_enabled() {
         DummyAutoRenewal::TEST_CLASS_HASH, array![eth.contract_address.into()]
     );
 
-    // we set the renewal contract and enable the discount
+    // we set the renewal contract and don't enable the discount
     naming.whitelist_renewal_contract(auto_renewal);
     //naming.toggle_ar_discount_renew();
     let (_, yearly_renewal_price) = pricing.compute_renew_price(7, 365);
