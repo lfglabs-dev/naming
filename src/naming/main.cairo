@@ -8,7 +8,6 @@ mod Naming {
     use array::{ArrayTrait, SpanTrait};
     use zeroable::Zeroable;
     use starknet::class_hash::ClassHash;
-    use integer::{u256_safe_divmod, u256_as_non_zero};
     use core::pedersen;
     use hash::LegacyHash;
     use ecdsa::check_ecdsa_signature;
@@ -17,14 +16,10 @@ mod Naming {
         naming::{asserts::AssertionsTrait, internal::InternalTrait, utils::UtilsTrait},
         interface::{
             naming::{INaming, INamingDispatcher, INamingDispatcherTrait},
-            resolver::{IResolver, IResolverDispatcher, IResolverDispatcherTrait},
             pricing::{IPricing, IPricingDispatcher, IPricingDispatcherTrait},
-            referral::{IReferral, IReferralDispatcher, IReferralDispatcherTrait},
             auto_renewal::{IAutoRenewal, IAutoRenewalDispatcher, IAutoRenewalDispatcherTrait}
         }
     };
-    use clone::Clone;
-    use array::ArrayTCloneImpl;
     use identity::interface::identity::{IIdentity, IIdentityDispatcher, IIdentityDispatcherTrait};
     use openzeppelin::token::erc20::interface::{
         IERC20Camel, IERC20CamelDispatcher, IERC20CamelDispatcherTrait

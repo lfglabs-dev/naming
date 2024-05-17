@@ -1,12 +1,6 @@
 use core::traits::TryInto;
 use core::array::SpanTrait;
 use naming::{
-    interface::{
-        naming::{INaming, INamingDispatcher, INamingDispatcherTrait},
-        resolver::{IResolver, IResolverDispatcher, IResolverDispatcherTrait},
-        pricing::{IPricing, IPricingDispatcher, IPricingDispatcherTrait},
-        referral::{IReferral, IReferralDispatcher, IReferralDispatcherTrait},
-    },
     naming::main::{
         Naming,
         Naming::{
@@ -25,7 +19,6 @@ use starknet::{
 use openzeppelin::token::erc20::interface::{
     IERC20Camel, IERC20CamelDispatcher, IERC20CamelDispatcherTrait
 };
-use integer::{u256_safe_divmod, u256_as_non_zero};
 use naming::naming::utils::UtilsTrait;
 
 #[generate_trait]
