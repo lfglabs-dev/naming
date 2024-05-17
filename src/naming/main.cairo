@@ -708,7 +708,7 @@ mod Naming {
         }
 
         fn set_expiry(
-            ref self: ContractState, root_domain: felt252, expiry: u64, metadata: felt252
+            ref self: ContractState, root_domain: felt252, expiry: u64
         ) {
             assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
             let hashed_domain = self.hash_domain(array![root_domain].span());
