@@ -732,8 +732,9 @@ mod Naming {
             assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
             let balance = IERC20CamelDispatcher { contract_address: erc20 }
                 .balanceOf(get_contract_address());
-            IERC20CamelDispatcher { contract_address: erc20 }
+            let has_claimed = IERC20CamelDispatcher { contract_address: erc20 }
                 .transfer(get_caller_address(), balance);
+            assert(has_claimed, 'Claim failed');
         }
 
         fn set_discount(ref self: ContractState, discount_id: felt252, discount: Discount) {
