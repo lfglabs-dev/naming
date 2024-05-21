@@ -284,6 +284,7 @@ mod Naming {
             let (hashed_domain, now, expiry) = self.assert_purchase_is_possible(id, domain, days);
             // we need a u256 to be able to perform safe divisions
             let domain_len = self.get_chars_len(domain.into());
+            assert(domain_len != 0, 'domain can\' be empty');
             // find domain cost
             let (erc20, price) = IPricingDispatcher {
                 contract_address: self._pricing_contract.read()
@@ -311,6 +312,7 @@ mod Naming {
             let (hashed_domain, now, expiry) = self.assert_purchase_is_possible(id, domain, days);
             // we need a u256 to be able to perform safe divisions
             let domain_len = self.get_chars_len(domain.into());
+            assert(domain_len != 0, 'domain can\' be empty');
 
             // check quote timestamp is still valid
             assert(get_block_timestamp() <= max_validity, 'quotation expired');
