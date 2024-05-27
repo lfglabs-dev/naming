@@ -154,7 +154,6 @@ impl InternalImpl of InternalTrait {
             if resolver_res == 0 {
                 let hashed_domain = self.hash_domain(domain);
                 return (0, hashed_domain);
-                
             }
             return (0, resolver_res);
         } else {
