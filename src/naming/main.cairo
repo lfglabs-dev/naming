@@ -279,7 +279,7 @@ mod Naming {
             let (hashed_domain, now, expiry) = self.assert_purchase_is_possible(id, domain, days);
             // we need a u256 to be able to perform safe divisions
             let domain_len = self.get_chars_len(domain.into());
-            assert(domain_len != 0, 'domain can\' be empty');
+            assert(domain_len != 0, 'domain can\'t be empty');
             // find domain cost
             let (erc20, price) = IPricingDispatcher {
                 contract_address: self._pricing_contract.read()
@@ -307,7 +307,7 @@ mod Naming {
             let (hashed_domain, now, expiry) = self.assert_purchase_is_possible(id, domain, days);
             // we need a u256 to be able to perform safe divisions
             let domain_len = self.get_chars_len(domain.into());
-            assert(domain_len != 0, 'domain can\' be empty');
+            assert(domain_len != 0, 'domain can\'t be empty');
 
             // check quote timestamp is still valid
             assert(get_block_timestamp() <= max_validity, 'quotation expired');
@@ -729,8 +729,9 @@ mod Naming {
             assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
             let balance = IERC20CamelDispatcher { contract_address: erc20 }
                 .balanceOf(get_contract_address());
-            IERC20CamelDispatcher { contract_address: erc20 }
+            let has_claimed = IERC20CamelDispatcher { contract_address: erc20 }
                 .transfer(get_caller_address(), balance);
+            assert(has_claimed, 'Claim failed');
         }
 
         fn set_discount(ref self: ContractState, discount_id: felt252, discount: Discount) {

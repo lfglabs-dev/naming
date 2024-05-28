@@ -19,7 +19,7 @@ use naming::interface::naming::{INamingDispatcher, INamingDispatcherTrait};
 use naming::interface::pricing::{IPricingDispatcher, IPricingDispatcherTrait};
 use naming::naming::main::Naming;
 use naming::pricing::Pricing;
-use super::common::deploy;
+use super::common::{deploy, deploy_with_erc20_fail};
 
 #[test]
 #[available_gas(2000000000)]
@@ -300,7 +300,34 @@ fn test_use_reset_subdomains() {
 
 #[test]
 #[available_gas(2000000000)]
-#[should_panic(expected: ('domain can\' be empty', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('payment failed', 'ENTRYPOINT_FAILED'))]
+fn test_transfer_from_returns_false() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy_with_erc20_fail();
+    let alpha = contract_address_const::<0x123>();
+
+    // we mint the id
+    set_contract_address(alpha);
+    identity.mint(1);
+
+    set_contract_address(alpha);
+    let aller: felt252 = 35683102;
+
+    // we check how much a domain costs
+    let (_, price) = pricing.compute_buy_price(5, 365);
+
+    // we allow the naming to take our money
+    eth.approve(naming.contract_address, price);
+
+    // we buy with no resolver, no sponsor, no discount and empty metadata
+    // in pay_domain transferFrom will return false
+    naming
+        .buy(1, aller, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0);
+}
+
+#[test]
+#[available_gas(2000000000)]
+#[should_panic(expected: ('domain can\'t be empty', 'ENTRYPOINT_FAILED'))]
 fn test_buy_empty_domain() {
     // setup
     let (eth, pricing, identity, naming) = deploy();
@@ -323,4 +350,3 @@ fn test_buy_empty_domain() {
     naming
         .buy(1, empty_domain, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0);
 }
-
