@@ -8,7 +8,6 @@ mod Naming {
     use array::{ArrayTrait, SpanTrait};
     use zeroable::Zeroable;
     use starknet::class_hash::ClassHash;
-    use integer::{u256_safe_divmod, u256_as_non_zero};
     use core::pedersen;
     use hash::LegacyHash;
     use ecdsa::check_ecdsa_signature;
@@ -17,14 +16,10 @@ mod Naming {
         naming::{asserts::AssertionsTrait, internal::InternalTrait, utils::UtilsTrait},
         interface::{
             naming::{INaming, INamingDispatcher, INamingDispatcherTrait},
-            resolver::{IResolver, IResolverDispatcher, IResolverDispatcherTrait},
             pricing::{IPricing, IPricingDispatcher, IPricingDispatcherTrait},
-            referral::{IReferral, IReferralDispatcher, IReferralDispatcherTrait},
             auto_renewal::{IAutoRenewal, IAutoRenewalDispatcher, IAutoRenewalDispatcherTrait}
         }
     };
-    use clone::Clone;
-    use array::ArrayTCloneImpl;
     use identity::interface::identity::{IIdentity, IIdentityDispatcher, IIdentityDispatcherTrait};
     use openzeppelin::token::erc20::interface::{
         IERC20Camel, IERC20CamelDispatcher, IERC20CamelDispatcherTrait
@@ -284,6 +279,7 @@ mod Naming {
             let (hashed_domain, now, expiry) = self.assert_purchase_is_possible(id, domain, days);
             // we need a u256 to be able to perform safe divisions
             let domain_len = self.get_chars_len(domain.into());
+            assert(domain_len != 0, 'domain can\' be empty');
             // find domain cost
             let (erc20, price) = IPricingDispatcher {
                 contract_address: self._pricing_contract.read()
@@ -311,6 +307,7 @@ mod Naming {
             let (hashed_domain, now, expiry) = self.assert_purchase_is_possible(id, domain, days);
             // we need a u256 to be able to perform safe divisions
             let domain_len = self.get_chars_len(domain.into());
+            assert(domain_len != 0, 'domain can\' be empty');
 
             // check quote timestamp is still valid
             assert(get_block_timestamp() <= max_validity, 'quotation expired');
@@ -708,7 +705,7 @@ mod Naming {
         }
 
         fn set_expiry(
-            ref self: ContractState, root_domain: felt252, expiry: u64, metadata: felt252
+            ref self: ContractState, root_domain: felt252, expiry: u64
         ) {
             assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
             let hashed_domain = self.hash_domain(array![root_domain].span());

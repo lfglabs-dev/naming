@@ -324,3 +324,30 @@ fn test_transfer_from_returns_false() {
     naming
         .buy(1, aller, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0);
 }
+
+#[test]
+#[available_gas(2000000000)]
+#[should_panic(expected: ('domain can\'t be empty', 'ENTRYPOINT_FAILED'))]
+fn test_buy_empty_domain() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let alpha = contract_address_const::<0x123>();
+
+    // we mint the id
+    set_contract_address(alpha);
+    identity.mint(1);
+
+    set_contract_address(alpha);
+    let empty_domain: felt252 = 0;
+
+    // we check how much a domain costs
+    let (_, price) = pricing.compute_buy_price(0, 365);
+
+    // we allow the naming to take our money
+    eth.approve(naming.contract_address, price);
+
+    // we buy with no resolver, no sponsor, no discount and empty metadata
+    naming
+        .buy(1, empty_domain, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0);
+}
+

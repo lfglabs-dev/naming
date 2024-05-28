@@ -1,5 +1,3 @@
-use starknet::ContractAddress;
-
 #[starknet::interface]
 trait IResolver<TContractState> {
     fn resolve(
