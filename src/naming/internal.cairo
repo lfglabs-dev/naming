@@ -147,11 +147,13 @@ impl InternalImpl of InternalTrait {
     ) -> (felt252, felt252) {
         let (resolver, parent_start) = self.domain_to_resolver(domain, 1);
         if (resolver != ContractAddressZeroable::zero()) {
-            (
-                0,
-                IResolverDispatcher { contract_address: resolver }
-                    .resolve(domain.slice(0, parent_start), field, hint)
-            )
+            let resolver_res = IResolverDispatcher { contract_address: resolver }
+                .resolve(domain.slice(0, parent_start), field, hint);
+            if resolver_res == 0 {
+                let hashed_domain = self.hash_domain(domain);
+                return (0, hashed_domain);
+            }
+            return (0, resolver_res);
         } else {
             let hashed_domain = self.hash_domain(domain);
             let domain_data = self._domain_data.read(hashed_domain);
