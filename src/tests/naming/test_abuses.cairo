@@ -350,4 +350,3 @@ fn test_buy_empty_domain() {
     naming
         .buy(1, empty_domain, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0);
 }
-
