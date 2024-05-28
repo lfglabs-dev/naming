@@ -1,8 +1,6 @@
 use naming::{
     interface::{
-        naming::{INaming, INamingDispatcher, INamingDispatcherTrait},
         resolver::{IResolver, IResolverDispatcher, IResolverDispatcherTrait},
-        pricing::{IPricing, IPricingDispatcher, IPricingDispatcherTrait},
         referral::{IReferral, IReferralDispatcher, IReferralDispatcherTrait},
     },
     naming::main::{
@@ -18,7 +16,7 @@ use naming::{
 use identity::interface::identity::{IIdentity, IIdentityDispatcher, IIdentityDispatcherTrait};
 use starknet::{
     contract_address::ContractAddressZeroable, ContractAddress, get_caller_address,
-    get_contract_address, get_block_timestamp
+    get_contract_address
 };
 use openzeppelin::token::erc20::interface::{
     IERC20Camel, IERC20CamelDispatcher, IERC20CamelDispatcherTrait
