@@ -156,6 +156,7 @@ mod Naming {
         self._pricing_contract.write(pricing);
         self._referral_contract.write(referral);
         self._admin_address.write(admin);
+        self.ownable.initializer(admin);
     }
 
     component!(path: storage_read_component, storage: storage_read, event: StorageReadEvent);
@@ -708,15 +709,10 @@ mod Naming {
 
         // ADMIN
 
-        fn update_admin(ref self: ContractState, new_admin: ContractAddress) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
-            self.ownable.initializer(new_admin);
-        }
-
         fn set_expiry(
             ref self: ContractState, root_domain: felt252, expiry: u64
         ) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             let hashed_domain = self.hash_domain(array![root_domain].span());
             let domain_data = self._domain_data.read(hashed_domain);
             let data = DomainData {
@@ -735,7 +731,7 @@ mod Naming {
         }
 
         fn claim_balance(ref self: ContractState, erc20: ContractAddress) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             let balance = IERC20CamelDispatcher { contract_address: erc20 }
                 .balanceOf(get_contract_address());
             let has_claimed = IERC20CamelDispatcher { contract_address: erc20 }
@@ -744,45 +740,45 @@ mod Naming {
         }
 
         fn set_discount(ref self: ContractState, discount_id: felt252, discount: Discount) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             self.discounts.write(discount_id, discount);
         }
 
         fn set_pricing_contract(ref self: ContractState, pricing_contract: ContractAddress) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             self._pricing_contract.write(pricing_contract);
         }
 
         fn set_referral_contract(ref self: ContractState, referral_contract: ContractAddress) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             self._referral_contract.write(referral_contract);
         }
 
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             // todo: use components
             assert(!new_class_hash.is_zero(), 'Class hash cannot be zero');
             starknet::replace_class_syscall(new_class_hash).unwrap();
         }
 
         fn set_server_pub_key(ref self: ContractState, new_key: felt252) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             self._server_pub_key.write(new_key);
         }
 
         fn whitelist_renewal_contract(ref self: ContractState, contract: ContractAddress) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             self._whitelisted_renewal_contracts.write(contract, true);
         }
 
         fn blacklist_renewal_contract(ref self: ContractState, contract: ContractAddress) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             self._whitelisted_renewal_contracts.write(contract, false);
         }
 
 
         fn toggle_ar_discount_renew(ref self: ContractState) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             self._ar_discount_renew_enabled.write(!self._ar_discount_renew_enabled.read());
         }
     }

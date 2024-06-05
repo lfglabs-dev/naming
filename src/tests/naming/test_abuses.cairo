@@ -216,21 +216,7 @@ fn test_renewal_period_too_long() {
 
 #[test]
 #[available_gas(2000000000)]
-#[should_panic(expected: ('you are not admin', 'ENTRYPOINT_FAILED'))]
-fn test_non_admin_cannot_set_admin() {
-    // setup
-    let (_, _, _, naming) = deploy();
-    let non_admin_address = contract_address_const::<0x456>();
-    set_contract_address(non_admin_address);
-
-    // A non-admin tries to set a new admin
-    let new_admin = contract_address_const::<0x789>();
-    naming.update_admin(new_admin);
-}
-
-#[test]
-#[available_gas(2000000000)]
-#[should_panic(expected: ('you are not admin', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('Caller is not the owner', 'ENTRYPOINT_FAILED'))]
 fn test_non_admin_cannot_claim_balance() {
     // setup
     let (eth, _, _, naming) = deploy();

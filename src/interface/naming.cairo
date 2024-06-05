@@ -122,6 +122,4 @@ trait INaming<TContractState> {
     fn blacklist_renewal_contract(ref self: TContractState, contract: ContractAddress);
 
     fn toggle_ar_discount_renew(ref self: TContractState);
-
-    fn update_admin(ref self: TContractState, new_admin: ContractAddress);
 }
