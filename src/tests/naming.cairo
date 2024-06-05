@@ -5,3 +5,4 @@ mod test_usecases;
 mod test_features;
 mod test_altcoin;
 mod test_ar_discount;
+mod test_admin_update;

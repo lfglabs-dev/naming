@@ -21,8 +21,9 @@ mod Naming {
         }
     };
     use identity::interface::identity::{IIdentity, IIdentityDispatcher, IIdentityDispatcherTrait};
-    use openzeppelin::token::erc20::interface::{
-        IERC20Camel, IERC20CamelDispatcher, IERC20CamelDispatcherTrait
+    use openzeppelin::{
+        access::ownable::OwnableComponent,
+        token::erc20::interface::{IERC20Camel, IERC20CamelDispatcher, IERC20CamelDispatcherTrait}
     };
     use storage_read::{main::storage_read_component, interface::IStorageRead};
 
@@ -38,7 +39,9 @@ mod Naming {
         DomainMigrated: DomainMigrated,
         SubdomainsReset: SubdomainsReset,
         SaleMetadata: SaleMetadata,
-        StorageReadEvent: storage_read_component::Event
+        StorageReadEvent: storage_read_component::Event,
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -137,6 +140,8 @@ mod Naming {
         _ar_discount_renew_enabled: bool,
         #[substorage(v0)]
         storage_read: storage_read_component::Storage,
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
     }
 
     #[constructor]
@@ -154,9 +159,13 @@ mod Naming {
     }
 
     component!(path: storage_read_component, storage: storage_read, event: StorageReadEvent);
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
 
     #[abi(embed_v0)]
     impl StorageReadComponent = storage_read_component::StorageRead<ContractState>;
+    #[abi(embed_v0)]
+    impl OwnableTwoStepImpl = OwnableComponent::OwnableTwoStepImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[abi(embed_v0)]
     impl NamingImpl of INaming<ContractState> {
@@ -699,9 +708,9 @@ mod Naming {
 
         // ADMIN
 
-        fn set_admin(ref self: ContractState, new_admin: ContractAddress) {
+        fn update_admin(ref self: ContractState, new_admin: ContractAddress) {
             assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
-            self._admin_address.write(new_admin);
+            self.ownable.initializer(new_admin);
         }
 
         fn set_expiry(

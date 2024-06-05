@@ -225,7 +225,7 @@ fn test_non_admin_cannot_set_admin() {
 
     // A non-admin tries to set a new admin
     let new_admin = contract_address_const::<0x789>();
-    naming.set_admin(new_admin);
+    naming.update_admin(new_admin);
 }
 
 #[test]
