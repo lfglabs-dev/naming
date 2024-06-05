@@ -230,7 +230,7 @@ fn test_non_admin_cannot_set_admin() {
 
 #[test]
 #[available_gas(2000000000)]
-#[should_panic(expected: ('you are not admin', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('Caller is not the owner', 'ENTRYPOINT_FAILED'))]
 fn test_non_admin_cannot_claim_balance() {
     // setup
     let (eth, _, _, naming) = deploy();

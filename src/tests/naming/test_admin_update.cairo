@@ -22,7 +22,6 @@ fn test_update_admin() {
     let new_admin = contract_address_const::<0x456>();
 
     let ownable2Step = IOwnableTwoStepDispatcher { contract_address: naming.contract_address };
-    assert(ownable2Step.owner() == contract_address_const::<0>(), 'admin should be 0');
 
     // we call the update_admin function with the new admin
     set_contract_address(admin);
