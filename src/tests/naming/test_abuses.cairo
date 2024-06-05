@@ -225,12 +225,12 @@ fn test_non_admin_cannot_set_admin() {
 
     // A non-admin tries to set a new admin
     let new_admin = contract_address_const::<0x789>();
-    naming.set_admin(new_admin);
+    naming.update_admin(new_admin);
 }
 
 #[test]
 #[available_gas(2000000000)]
-#[should_panic(expected: ('you are not admin', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('Caller is not the owner', 'ENTRYPOINT_FAILED'))]
 fn test_non_admin_cannot_claim_balance() {
     // setup
     let (eth, _, _, naming) = deploy();
