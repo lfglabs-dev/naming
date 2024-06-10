@@ -6,6 +6,7 @@ trait IReferral<TContractState> {
         self: @TContractState,
         amount: u256,
         sponsor_addr: ContractAddress,
-        sponsored_addr: ContractAddress
+        sponsored_addr: ContractAddress,
+        erc20_addr: ContractAddress,
     );
 }
