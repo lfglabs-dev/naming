@@ -22,16 +22,28 @@ fn test_update_admin() {
     let new_admin = contract_address_const::<0x456>();
 
     let ownable2Step = IOwnableTwoStepDispatcher { contract_address: naming.contract_address };
-
-    // we call the update_admin function with the new admin
-    set_contract_address(admin);
-    naming.update_admin(new_admin);
-    assert(ownable2Step.owner() == new_admin, 'change of admin failed');
+    assert(ownable2Step.owner() == admin, 'admin not initialized');
 
     // Now we go back to the first admin, this time using the ownable2Step
-    set_contract_address(new_admin);
-    ownable2Step.transfer_ownership(admin);
     set_contract_address(admin);
+    ownable2Step.transfer_ownership(new_admin);
+    set_contract_address(new_admin);
     ownable2Step.accept_ownership();
-    assert(ownable2Step.owner() == admin, 'change of admin failed');
+    assert(ownable2Step.owner() == new_admin, 'change of admin failed');
+}
+
+
+#[test]
+#[available_gas(2000000000)]
+#[should_panic(expected: ('Caller is not the owner', 'ENTRYPOINT_FAILED'))]
+fn test_non_admin_cannot_set_admin() {
+    // setup
+    let (_, _, _, naming) = deploy();
+    let ownable2Step = IOwnableTwoStepDispatcher { contract_address: naming.contract_address };
+    let non_admin_address = contract_address_const::<0x456>();
+    set_contract_address(non_admin_address);
+
+    // A non-admin tries to set a new admin
+    let new_admin = contract_address_const::<0x789>();
+    ownable2Step.transfer_ownership(new_admin);
 }

@@ -129,7 +129,6 @@ mod Naming {
         starknetid_contract: ContractAddress,
         _pricing_contract: ContractAddress,
         _referral_contract: ContractAddress,
-        _admin_address: ContractAddress,
         _domain_data: LegacyMap<felt252, DomainData>,
         _hash_to_domain: LegacyMap<(felt252, usize), felt252>,
         _address_to_domain: LegacyMap<(ContractAddress, usize), felt252>,
@@ -155,7 +154,6 @@ mod Naming {
         self.starknetid_contract.write(starknetid);
         self._pricing_contract.write(pricing);
         self._referral_contract.write(referral);
-        self._admin_address.write(admin);
         self.ownable.initializer(admin);
     }
 
@@ -708,12 +706,6 @@ mod Naming {
         }
 
         // ADMIN
-
-        fn update_admin(ref self: ContractState, new_admin: ContractAddress) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
-            self.ownable.initializer(new_admin);
-            self._admin_address.write(Zeroable::zero());
-        }
 
         fn set_expiry(
             ref self: ContractState, root_domain: felt252, expiry: u64
