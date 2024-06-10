@@ -106,7 +106,7 @@ impl InternalImpl of InternalTrait {
         // add sponsor commission if eligible
         if sponsor.into() != 0 {
             IReferralDispatcher { contract_address: self._referral_contract.read() }
-                .add_commission(discounted_price, sponsor, sponsored_addr: get_caller_address());
+                .add_commission(discounted_price, sponsor, sponsored_addr: get_caller_address(), erc20_addr: erc20);
         }
     }
 
