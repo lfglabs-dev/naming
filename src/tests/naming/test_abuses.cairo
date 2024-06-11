@@ -299,16 +299,95 @@ fn test_transfer_from_returns_false() {
     set_contract_address(alpha);
     let aller: felt252 = 35683102;
 
+
+#[test]
+#[available_gas(2000000000)]
+//#[should_panic(expected: ('a parent domain was reset', 'ENTRYPOINT_FAILED'))]
+fn test_use_reset_subdomains_multiple_levels() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let alpha = contract_address_const::<0x123>();
+    let bravo = contract_address_const::<0x456>();
+    let charlie = contract_address_const::<0x789>();
+    // In this example we will use utf-8 encoded strings like 'toto' which is not 
+    // what is actually defined in the starknetid standard, it's just easier for testings
+
+    // we mint the ids
+    set_contract_address(alpha);
+    identity.mint(1);
+    set_contract_address(bravo);
+    identity.mint(2);
+    set_contract_address(charlie);
+    identity.mint(3);
+
     // we check how much a domain costs
     let (_, price) = pricing.compute_buy_price(5, 365);
+
+    // we allow the naming to take our money
+    set_contract_address(alpha);
+    eth.approve(naming.contract_address, price);
+
+    // we buy with no resolver, no sponsor, no discount and empty metadata
+    naming
+        .buy(
+            1, 'ccccc', 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0
+        );
+
+    let root_domain = array!['ccccc'].span();
+    let subdomain = array!['bbbbb', 'ccccc'].span();
+
+    // we transfer bb.cc.stark to id2
+    naming.transfer_domain(subdomain, 2);
+
+    // and make sure the owner has been updated
+    assert(naming.domain_to_id(subdomain) == 2, 'owner not updated correctly');
+
+    set_contract_address(bravo);
+    // we transfer aa.bb.cc.stark to id3
+    let subsubdomain = array!['aaaaa', 'bbbbb', 'ccccc'].span();
+    naming.transfer_domain(subsubdomain, 3);
+
+    // now charlie should be able to create a subbsubsubdomain (example.aa.bb.cc.stark):
+    set_contract_address(charlie);
+    let subsubsubdomain = array!['example', 'aaaaa', 'bbbbb', 'ccccc'].span();
+    naming.transfer_domain(subsubsubdomain, 4);
+
+    // alpha resets subdomains of aller.stark
+    set_contract_address(alpha);
+    naming.reset_subdomains(root_domain);
+
+    // ensure root domain still resolves
+    assert(naming.domain_to_id(root_domain) == 1, 'owner not updated correctly');
+    // ensure the subdomain was reset
+    assert(naming.domain_to_id(subdomain) == 0, 'owner not updated correctly');
+    // ensure the subsubdomain was reset
+    assert(naming.domain_to_id(subsubdomain) == 0, 'owner not updated correctly');
+}
+
+#[test]
+#[available_gas(2000000000)]
+#[should_panic(expected: ('domain can\'t be empty', 'ENTRYPOINT_FAILED'))]
+fn test_buy_empty_domain() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let alpha = contract_address_const::<0x123>();
+
+    // we mint the id
+    set_contract_address(alpha);
+    identity.mint(1);
+
+    set_contract_address(alpha);
+    let empty_domain: felt252 = 0;
+
+    // we check how much a domain costs
+    let (_, price) = pricing.compute_buy_price(0, 365);
 
     // we allow the naming to take our money
     eth.approve(naming.contract_address, price);
 
     // we buy with no resolver, no sponsor, no discount and empty metadata
-    // in pay_domain transferFrom will return false
     naming
-        .buy(1, aller, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0);
+        .buy(1, empty_domain, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0);
 }
 
 #[test]
