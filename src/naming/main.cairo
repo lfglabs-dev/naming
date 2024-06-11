@@ -8,7 +8,6 @@ mod Naming {
     use array::{ArrayTrait, SpanTrait};
     use zeroable::Zeroable;
     use starknet::class_hash::ClassHash;
-    use integer::{u256_safe_divmod, u256_as_non_zero};
     use core::pedersen;
     use hash::LegacyHash;
     use ecdsa::check_ecdsa_signature;
@@ -17,17 +16,14 @@ mod Naming {
         naming::{asserts::AssertionsTrait, internal::InternalTrait, utils::UtilsTrait},
         interface::{
             naming::{INaming, INamingDispatcher, INamingDispatcherTrait},
-            resolver::{IResolver, IResolverDispatcher, IResolverDispatcherTrait},
             pricing::{IPricing, IPricingDispatcher, IPricingDispatcherTrait},
-            referral::{IReferral, IReferralDispatcher, IReferralDispatcherTrait},
             auto_renewal::{IAutoRenewal, IAutoRenewalDispatcher, IAutoRenewalDispatcherTrait}
         }
     };
-    use clone::Clone;
-    use array::ArrayTCloneImpl;
     use identity::interface::identity::{IIdentity, IIdentityDispatcher, IIdentityDispatcherTrait};
-    use openzeppelin::token::erc20::interface::{
-        IERC20Camel, IERC20CamelDispatcher, IERC20CamelDispatcherTrait
+    use openzeppelin::{
+        access::ownable::OwnableComponent,
+        token::erc20::interface::{IERC20Camel, IERC20CamelDispatcher, IERC20CamelDispatcherTrait}
     };
     use storage_read::{main::storage_read_component, interface::IStorageRead};
 
@@ -43,7 +39,9 @@ mod Naming {
         DomainMigrated: DomainMigrated,
         SubdomainsReset: SubdomainsReset,
         SaleMetadata: SaleMetadata,
-        StorageReadEvent: storage_read_component::Event
+        StorageReadEvent: storage_read_component::Event,
+        #[flat]
+        OwnableEvent: OwnableComponent::Event,
     }
 
     #[derive(Drop, starknet::Event)]
@@ -131,7 +129,6 @@ mod Naming {
         starknetid_contract: ContractAddress,
         _pricing_contract: ContractAddress,
         _referral_contract: ContractAddress,
-        _admin_address: ContractAddress,
         _domain_data: LegacyMap<felt252, DomainData>,
         _hash_to_domain: LegacyMap<(felt252, usize), felt252>,
         _address_to_domain: LegacyMap<(ContractAddress, usize), felt252>,
@@ -142,6 +139,8 @@ mod Naming {
         _ar_discount_renew_enabled: bool,
         #[substorage(v0)]
         storage_read: storage_read_component::Storage,
+        #[substorage(v0)]
+        ownable: OwnableComponent::Storage,
     }
 
     #[constructor]
@@ -155,13 +154,17 @@ mod Naming {
         self.starknetid_contract.write(starknetid);
         self._pricing_contract.write(pricing);
         self._referral_contract.write(referral);
-        self._admin_address.write(admin);
+        self.ownable.initializer(admin);
     }
 
     component!(path: storage_read_component, storage: storage_read, event: StorageReadEvent);
+    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
 
     #[abi(embed_v0)]
     impl StorageReadComponent = storage_read_component::StorageRead<ContractState>;
+    #[abi(embed_v0)]
+    impl OwnableTwoStepImpl = OwnableComponent::OwnableTwoStepImpl<ContractState>;
+    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
 
     #[abi(embed_v0)]
     impl NamingImpl of INaming<ContractState> {
@@ -284,6 +287,7 @@ mod Naming {
             let (hashed_domain, now, expiry) = self.assert_purchase_is_possible(id, domain, days);
             // we need a u256 to be able to perform safe divisions
             let domain_len = self.get_chars_len(domain.into());
+            assert(domain_len != 0, 'domain can\'t be empty');
             // find domain cost
             let (erc20, price) = IPricingDispatcher {
                 contract_address: self._pricing_contract.read()
@@ -311,6 +315,7 @@ mod Naming {
             let (hashed_domain, now, expiry) = self.assert_purchase_is_possible(id, domain, days);
             // we need a u256 to be able to perform safe divisions
             let domain_len = self.get_chars_len(domain.into());
+            assert(domain_len != 0, 'domain can\'t be empty');
 
             // check quote timestamp is still valid
             assert(get_block_timestamp() <= max_validity, 'quotation expired');
@@ -702,15 +707,10 @@ mod Naming {
 
         // ADMIN
 
-        fn set_admin(ref self: ContractState, new_admin: ContractAddress) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
-            self._admin_address.write(new_admin);
-        }
-
         fn set_expiry(
-            ref self: ContractState, root_domain: felt252, expiry: u64, metadata: felt252
+            ref self: ContractState, root_domain: felt252, expiry: u64
         ) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             let hashed_domain = self.hash_domain(array![root_domain].span());
             let domain_data = self._domain_data.read(hashed_domain);
             let data = DomainData {
@@ -729,53 +729,54 @@ mod Naming {
         }
 
         fn claim_balance(ref self: ContractState, erc20: ContractAddress) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             let balance = IERC20CamelDispatcher { contract_address: erc20 }
                 .balanceOf(get_contract_address());
-            IERC20CamelDispatcher { contract_address: erc20 }
+            let has_claimed = IERC20CamelDispatcher { contract_address: erc20 }
                 .transfer(get_caller_address(), balance);
+            assert(has_claimed, 'Claim failed');
         }
 
         fn set_discount(ref self: ContractState, discount_id: felt252, discount: Discount) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             self.discounts.write(discount_id, discount);
         }
 
         fn set_pricing_contract(ref self: ContractState, pricing_contract: ContractAddress) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             self._pricing_contract.write(pricing_contract);
         }
 
         fn set_referral_contract(ref self: ContractState, referral_contract: ContractAddress) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             self._referral_contract.write(referral_contract);
         }
 
         fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             // todo: use components
             assert(!new_class_hash.is_zero(), 'Class hash cannot be zero');
             starknet::replace_class_syscall(new_class_hash).unwrap();
         }
 
         fn set_server_pub_key(ref self: ContractState, new_key: felt252) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             self._server_pub_key.write(new_key);
         }
 
         fn whitelist_renewal_contract(ref self: ContractState, contract: ContractAddress) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             self._whitelisted_renewal_contracts.write(contract, true);
         }
 
         fn blacklist_renewal_contract(ref self: ContractState, contract: ContractAddress) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             self._whitelisted_renewal_contracts.write(contract, false);
         }
 
 
         fn toggle_ar_discount_renew(ref self: ContractState) {
-            assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
+            self.ownable.assert_only_owner();
             self._ar_discount_renew_enabled.write(!self._ar_discount_renew_enabled.read());
         }
     }

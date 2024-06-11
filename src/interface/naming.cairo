@@ -102,9 +102,8 @@ trait INaming<TContractState> {
     );
 
     // admin
-    fn set_admin(ref self: TContractState, new_admin: ContractAddress);
 
-    fn set_expiry(ref self: TContractState, root_domain: felt252, expiry: u64, metadata: felt252);
+    fn set_expiry(ref self: TContractState, root_domain: felt252, expiry: u64);
 
     fn claim_balance(ref self: TContractState, erc20: ContractAddress);
 
@@ -123,5 +122,4 @@ trait INaming<TContractState> {
     fn blacklist_renewal_contract(ref self: TContractState, contract: ContractAddress);
 
     fn toggle_ar_discount_renew(ref self: TContractState);
-
 }

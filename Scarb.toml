@@ -23,6 +23,9 @@ casm-add-pythonic-hints = true
 
 build-external-contracts = ["identity::identity::main::Identity"]
 
+[tool.voyager]
+naming = { path = "src/naming.cairo" }
+
 [lib]
 sierra = true
 casm = false

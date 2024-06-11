@@ -1,8 +1,6 @@
 use naming::{
     interface::{
-        naming::{INaming, INamingDispatcher, INamingDispatcherTrait},
         resolver::{IResolver, IResolverDispatcher, IResolverDispatcherTrait},
-        pricing::{IPricing, IPricingDispatcher, IPricingDispatcherTrait},
         referral::{IReferral, IReferralDispatcher, IReferralDispatcherTrait},
     },
     naming::main::{
@@ -18,7 +16,7 @@ use naming::{
 use identity::interface::identity::{IIdentity, IIdentityDispatcher, IIdentityDispatcherTrait};
 use starknet::{
     contract_address::ContractAddressZeroable, ContractAddress, get_caller_address,
-    get_contract_address, get_block_timestamp
+    get_contract_address
 };
 use openzeppelin::token::erc20::interface::{
     IERC20Camel, IERC20CamelDispatcher, IERC20CamelDispatcherTrait
@@ -102,12 +100,13 @@ impl InternalImpl of InternalTrait {
         };
 
         // pay the price
-        IERC20CamelDispatcher { contract_address: erc20 }
+        let has_payed = IERC20CamelDispatcher { contract_address: erc20 }
             .transferFrom(get_caller_address(), get_contract_address(), discounted_price);
+        assert(has_payed, 'payment failed');
         // add sponsor commission if eligible
         if sponsor.into() != 0 {
             IReferralDispatcher { contract_address: self._referral_contract.read() }
-                .add_commission(discounted_price, sponsor, sponsored_addr: get_caller_address());
+                .add_commission(discounted_price, sponsor, sponsored_addr: get_caller_address(), erc20_addr: erc20);
         }
     }
 
@@ -149,11 +148,13 @@ impl InternalImpl of InternalTrait {
     ) -> (felt252, felt252) {
         let (resolver, parent_start) = self.domain_to_resolver(domain, 1);
         if (resolver != ContractAddressZeroable::zero()) {
-            (
-                0,
-                IResolverDispatcher { contract_address: resolver }
-                    .resolve(domain.slice(0, parent_start), field, hint)
-            )
+            let resolver_res = IResolverDispatcher { contract_address: resolver }
+                .resolve(domain.slice(0, parent_start), field, hint);
+            if resolver_res == 0 {
+                let hashed_domain = self.hash_domain(domain);
+                return (0, hashed_domain);
+            }
+            return (0, resolver_res);
         } else {
             let hashed_domain = self.hash_domain(domain);
             let domain_data = self._domain_data.read(hashed_domain);
