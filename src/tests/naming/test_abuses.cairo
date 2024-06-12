@@ -164,7 +164,7 @@ fn test_non_owner_cannot_transfer_domain() {
 
 #[test]
 #[available_gas(2000000000)]
-#[should_panic(expected: ('purchase too short', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('min purchase of 6 months', 'ENTRYPOINT_FAILED'))]
 fn test_renewal_period_too_short() {
     // setup
     let (eth, pricing, identity, naming) = deploy();
@@ -190,7 +190,7 @@ fn test_renewal_period_too_short() {
 
 #[test]
 #[available_gas(2000000000)]
-#[should_panic(expected: ('purchase too long', 'ENTRYPOINT_FAILED'))]
+#[should_panic(expected: ('max purchase of 25 years', 'ENTRYPOINT_FAILED'))]
 fn test_renewal_period_too_long() {
     // setup
     let (eth, pricing, identity, naming) = deploy();
@@ -334,5 +334,13 @@ fn test_buy_empty_domain() {
 
     // we buy with no resolver, no sponsor, no discount and empty metadata
     naming
-        .buy(1, empty_domain, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0);
+        .buy(
+            1,
+            empty_domain,
+            365,
+            ContractAddressZeroable::zero(),
+            ContractAddressZeroable::zero(),
+            0,
+            0
+        );
 }

@@ -37,7 +37,7 @@ impl AssertionsImpl of AssertionsTrait {
         assert(data.owner == 0 || data.expiry < now, 'unexpired domain');
 
         // Verify expiration range
-        assert(days < 365 * 25, 'max purchase of 25 years');
+        assert(days <= 365 * 25, 'max purchase of 25 years');
         assert(days > 2 * 30, 'min purchase of 2 month');
         return (hashed_domain, now, now + 86400 * days.into());
     }

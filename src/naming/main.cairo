@@ -383,8 +383,8 @@ mod Naming {
                 domain_data.expiry + 86400 * days.into()
             };
             // 25*365 = 9125
-            assert(new_expiry <= now + 86400 * 9125, 'purchase too long');
-            assert(days >= 6 * 30, 'purchase too short');
+            assert(new_expiry <= now + 365 * 25 * 86400, 'max purchase of 25 years');
+            assert(days >= 6 * 30, 'min purchase of 6 months');
 
             let data = DomainData {
                 owner: domain_data.owner,
@@ -456,9 +456,8 @@ mod Naming {
             } else {
                 domain_data.expiry + 86400 * days.into()
             };
-            // 25*365 = 9125
-            assert(new_expiry <= now + 86400 * 9125, 'purchase too long');
-            assert(days >= 6 * 30, 'purchase too short');
+            assert(new_expiry <= now + 365 * 25 * 86400, 'max purchase of 25 years');
+            assert(days >= 6 * 30, 'min purchase of 6 months');
 
             let data = DomainData {
                 owner: domain_data.owner,
@@ -707,9 +706,7 @@ mod Naming {
 
         // ADMIN
 
-        fn set_expiry(
-            ref self: ContractState, root_domain: felt252, expiry: u64
-        ) {
+        fn set_expiry(ref self: ContractState, root_domain: felt252, expiry: u64) {
             self.ownable.assert_only_owner();
             let hashed_domain = self.hash_domain(array![root_domain].span());
             let domain_data = self._domain_data.read(hashed_domain);
