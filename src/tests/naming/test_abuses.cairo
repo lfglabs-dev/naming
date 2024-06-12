@@ -20,7 +20,6 @@ use naming::interface::pricing::{IPricingDispatcher, IPricingDispatcherTrait};
 use naming::naming::main::Naming;
 use naming::pricing::Pricing;
 use super::common::{deploy, deploy_with_erc20_fail};
-use debug::PrintTrait;
 
 #[test]
 #[available_gas(2000000000)]
@@ -359,7 +358,6 @@ fn test_use_reset_subdomains_multiple_levels() {
     let subsubdomain = array!['aaaaa', 'bbbbb', 'ccccc'].span();
     naming.transfer_domain(subsubdomain, 3);
     // and make sure the owner has been updated
-    naming.domain_to_id(subsubdomain).print();
     assert(naming.domain_to_id(subsubdomain) == 3, 'owner2 not updated correctly');
 
     // now charlie should be able to create a subbsubsubdomain (example.aa.bb.cc.stark):

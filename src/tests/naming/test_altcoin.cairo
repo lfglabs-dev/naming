@@ -21,7 +21,6 @@ use naming::pricing::Pricing;
 use naming::naming::utils::UtilsImpl;
 use super::common::{deploy, deploy_stark};
 use super::super::utils;
-use core::debug::PrintTrait;
 use wadray::Wad;
 
 #[test]
