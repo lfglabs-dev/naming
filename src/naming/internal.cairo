@@ -1,9 +1,6 @@
 use core::array::SpanTrait;
 use naming::{
-    interface::{
-        resolver::{IResolver, IResolverDispatcher, IResolverDispatcherTrait},
-        referral::{IReferral, IReferralDispatcher, IReferralDispatcherTrait},
-    },
+    interface::referral::{IReferral, IReferralDispatcher, IReferralDispatcherTrait},
     naming::main::{
         Naming,
         Naming::{
@@ -159,38 +156,6 @@ impl InternalImpl of InternalTrait {
                         Naming::DomainResolverUpdate { domain: array![domain].span(), resolver }
                     )
                 );
-        }
-    }
-
-    // returns domain_hash (or zero) and its value for a specific field
-    fn resolve_util(
-        self: @Naming::ContractState, domain: Span<felt252>, field: felt252, hint: Span<felt252>
-    ) -> (felt252, felt252) {
-        let (resolver, parent_length) = self.domain_to_resolver(domain);
-        // if there is a resolver starting from the top
-        if (resolver != ContractAddressZeroable::zero()) {
-            let resolver_res = IResolverDispatcher { contract_address: resolver }
-                .resolve(domain.slice(0, domain.len() - parent_length), field, hint);
-            if resolver_res == 0 {
-                let hashed_domain = self.hash_domain(domain);
-                (hashed_domain, 0)
-            } else {
-                (0, resolver_res)
-            }
-        } else {
-            let hashed_domain = self.hash_domain(domain);
-            let domain_data = self._domain_data.read(hashed_domain);
-            // if there was a reset subdomains starting from the top
-            if parent_length != 0 {
-                (hashed_domain, 0)
-            // otherwise, we just read the identity
-            } else {
-                (
-                    hashed_domain,
-                    IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
-                        .get_crosschecked_user_data(domain_data.owner, field)
-                )
-            }
         }
     }
 }

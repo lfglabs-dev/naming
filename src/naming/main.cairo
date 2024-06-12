@@ -229,7 +229,7 @@ mod Naming {
                         addr.unwrap()
                     } else {
                         if domain_data.address.into() != 0 {
-                            // no need to check for keys as it was checked in resolve_util
+                            // no need to check for keys as it was checked in domain_to_resolver
                             return domain_data.address;
                         } else {
                             // if no legacy address is found, it returns the identity owner
