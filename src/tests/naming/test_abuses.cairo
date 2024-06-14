@@ -313,7 +313,6 @@ fn test_transfer_from_returns_false() {
 
 #[test]
 #[available_gas(2000000000)]
-//#[should_panic(expected: ('a parent domain was reset', 'ENTRYPOINT_FAILED'))]
 fn test_use_reset_subdomains_multiple_levels() {
     // setup
     let (eth, pricing, identity, naming) = deploy();
@@ -365,7 +364,7 @@ fn test_use_reset_subdomains_multiple_levels() {
     let subsubsubdomain = array!['example', 'aaaaa', 'bbbbb', 'ccccc'].span();
     naming.transfer_domain(subsubsubdomain, 4);
 
-    // alpha resets subdomains of aller.stark
+    // alpha resets subdomains of ccccc.stark
     set_contract_address(alpha);
     naming.reset_subdomains(root_domain);
 
