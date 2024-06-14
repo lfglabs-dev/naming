@@ -17,7 +17,8 @@ mod Naming {
         interface::{
             naming::{INaming, INamingDispatcher, INamingDispatcherTrait},
             pricing::{IPricing, IPricingDispatcher, IPricingDispatcherTrait},
-            auto_renewal::{IAutoRenewal, IAutoRenewalDispatcher, IAutoRenewalDispatcherTrait}
+            auto_renewal::{IAutoRenewal, IAutoRenewalDispatcher, IAutoRenewalDispatcherTrait},
+            resolver::{IResolver, IResolverDispatcher, IResolverDispatcherTrait}
         }
     };
     use identity::interface::identity::{IIdentity, IIdentityDispatcher, IIdentityDispatcherTrait};
@@ -177,8 +178,23 @@ mod Naming {
         fn resolve(
             self: @ContractState, domain: Span<felt252>, field: felt252, hint: Span<felt252>
         ) -> felt252 {
-            let (_, value) = self.resolve_util(domain, field, hint);
-            value
+            let (resolver, parent_length) = self.domain_to_resolver(domain);
+            // if there is a resolver starting from the top
+            if (resolver != ContractAddressZeroable::zero()) {
+                IResolverDispatcher { contract_address: resolver }
+                    .resolve(domain.slice(0, domain.len() - parent_length), field, hint)
+            } else {
+                let hashed_domain = self.hash_domain(domain);
+                let domain_data = self._domain_data.read(hashed_domain);
+                // if there was a reset subdomains starting from the top
+                if parent_length != 0 {
+                    0
+                // otherwise, we just read the identity
+                } else {
+                    IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
+                        .get_crosschecked_user_data(domain_data.owner, field)
+                }
+            }
         }
 
         // This functions allows to resolve a domain to a native address. Its output is designed
@@ -187,27 +203,44 @@ mod Naming {
         fn domain_to_address(
             self: @ContractState, domain: Span<felt252>, hint: Span<felt252>
         ) -> ContractAddress {
-            // resolve must be performed first because it calls untrusted resolving contracts
-            let (hashed_domain, value) = self.resolve_util(domain, 'starknet', hint);
-            if value != 0 {
-                let addr: Option<ContractAddress> = value.try_into();
-                return addr.unwrap();
-            };
-            let data = self._domain_data.read(hashed_domain);
-            if data.address.into() != 0 {
-                if domain.len() != 1 {
-                    let parent_key = self
-                        ._domain_data
-                        .read(self.hash_domain(domain.slice(1, domain.len() - 1)))
-                        .key;
-                    if parent_key == data.parent_key {
-                        return data.address;
-                    };
-                };
-                return data.address;
-            };
-            IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
-                .owner_from_id(self.domain_to_id(domain))
+            let (resolver, parent_length) = self.domain_to_resolver(domain);
+            // if there is a resolver starting from the top
+            if (resolver != ContractAddressZeroable::zero()) {
+                let addr: Option<ContractAddress> = IResolverDispatcher {
+                    contract_address: resolver
+                }
+                    .resolve(domain.slice(0, domain.len() - parent_length), 'starknet', hint)
+                    .try_into();
+                addr.unwrap()
+            } else {
+                // if there was a reset subdomains starting from the top
+                if parent_length != 0 {
+                    ContractAddressZeroable::zero()
+                // otherwise we read the identity
+                } else {
+                    let hashed_domain = self.hash_domain(domain);
+                    let domain_data = self._domain_data.read(hashed_domain);
+                    let identity_address = IIdentityDispatcher {
+                        contract_address: self.starknetid_contract.read()
+                    }
+                        .get_crosschecked_user_data(domain_data.owner, 'starknet');
+                    if identity_address != 0 {
+                        let addr: Option<ContractAddress> = identity_address.try_into();
+                        addr.unwrap()
+                    } else {
+                        if domain_data.address.into() != 0 {
+                            // no need to check for keys as it was checked in domain_to_resolver
+                            return domain_data.address;
+                        } else {
+                            // if no legacy address is found, it returns the identity owner
+                            IIdentityDispatcher {
+                                contract_address: self.starknetid_contract.read()
+                            }
+                                .owner_from_id(self.domain_to_id(domain))
+                        }
+                    }
+                }
+            }
         }
 
         // This returns the stored DomainData associated to this domain
@@ -221,22 +254,29 @@ mod Naming {
         }
 
         // This returns the identity (StarknetID) owning the domain
-        fn domain_to_id(self: @ContractState, domain: Span<felt252>) -> u128 {
+        fn domain_to_id(self: @ContractState, mut domain: Span<felt252>) -> u128 {
             let data = self._domain_data.read(self.hash_domain(domain));
             // todo: revert when try catch are available 
             if domain.len() == 0 {
                 return 0;
             };
-            if domain.len() != 1 {
-                let parent_key = self
-                    ._domain_data
-                    .read(self.hash_domain(domain.slice(1, domain.len() - 1)))
-                    .key;
-                if parent_key != data.parent_key {
-                    return 0;
-                };
+
+            let mut parent_key = data.parent_key;
+            let mut output = data.owner;
+            loop {
+                if domain.len() == 1 {
+                    break;
+                }
+                let parent_domain = domain.slice(1, domain.len() - 1);
+                let parent_domain_data = self._domain_data.read(self.hash_domain(parent_domain));
+                if parent_domain_data.key != parent_key {
+                    output = 0;
+                    break;
+                }
+                domain = parent_domain;
+                parent_key = parent_domain_data.parent_key;
             };
-            data.owner
+            output
         }
 
         // This function allows to find which domain to use to display an account

@@ -55,9 +55,7 @@ mod CustomResolver {
 fn test_custom_resolver() {
     // setup
     let (eth, pricing, identity, naming) = deploy();
-    let custom_resolver = IERC20CamelDispatcher {
-        contract_address: utils::deploy(CustomResolver::TEST_CLASS_HASH, ArrayTrait::new())
-    };
+    let custom_resolver = utils::deploy(CustomResolver::TEST_CLASS_HASH, ArrayTrait::new());
 
     let caller = contract_address_const::<0x123>();
     set_contract_address(caller);
@@ -73,13 +71,13 @@ fn test_custom_resolver() {
     // we allow the naming to take our money
     eth.approve(naming.contract_address, price);
 
-    // we buy with no resolver, no sponsor, no discount and empty metadata
+    // we buy with a custom resolver, no sponsor, no discount and empty metadata
     naming
         .buy(
             id,
             th0rgal,
             365,
-            custom_resolver.contract_address,
+            custom_resolver,
             ContractAddressZeroable::zero(),
             0,
             0
@@ -92,7 +90,6 @@ fn test_custom_resolver() {
     assert(naming.domain_to_address(domain, array![].span()) == caller, 'wrong domain target');
 
     let domain = array![1, 2, 3, th0rgal].span();
-
     let new_target = contract_address_const::<0x6>();
     // let's try the resolving
     assert(naming.resolve(domain, 'starknet', array![].span()) == 1 + 2 + 3, 'wrong target');

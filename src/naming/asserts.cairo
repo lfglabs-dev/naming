@@ -60,6 +60,8 @@ impl AssertionsImpl of AssertionsTrait {
         let mut i: felt252 = 1;
         let stop = (domain.len() + 1).into();
         let mut parent_key = 0;
+        // we start from the top domain and go down until we find you are the owner,
+        // reach the domain beginning or reach a key mismatch (reset parent domain)
         loop {
             assert(i != stop, 'you don\'t own this domain');
             let i_gas_saver = i.try_into().unwrap();
