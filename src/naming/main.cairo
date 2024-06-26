@@ -704,9 +704,7 @@ mod Naming {
             self._admin_address.write(new_admin);
         }
 
-        fn set_expiry(
-            ref self: ContractState, root_domain: felt252, expiry: u64
-        ) {
+        fn set_expiry(ref self: ContractState, root_domain: felt252, expiry: u64) {
             assert(get_caller_address() == self._admin_address.read(), 'you are not admin');
             let hashed_domain = self.hash_domain(array![root_domain].span());
             let domain_data = self._domain_data.read(hashed_domain);

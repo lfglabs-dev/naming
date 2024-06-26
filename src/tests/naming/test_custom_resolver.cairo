@@ -50,14 +50,32 @@ mod CustomResolver {
 }
 
 
+#[starknet::contract]
+mod EmptyCustomResolver {
+    use core::array::SpanTrait;
+    use naming::interface::resolver::IResolver;
+
+    #[storage]
+    struct Storage {}
+
+
+    #[abi(embed_v0)]
+    impl AdditionResolveImpl of IResolver<ContractState> {
+        fn resolve(
+            self: @ContractState, mut domain: Span<felt252>, field: felt252, hint: Span<felt252>
+        ) -> felt252 {
+            0
+        }
+    }
+}
+
+
 #[test]
 #[available_gas(2000000000)]
 fn test_custom_resolver() {
     // setup
     let (eth, pricing, identity, naming) = deploy();
-    let custom_resolver = IERC20CamelDispatcher {
-        contract_address: utils::deploy(CustomResolver::TEST_CLASS_HASH, ArrayTrait::new())
-    };
+    let custom_resolver = utils::deploy(CustomResolver::TEST_CLASS_HASH, ArrayTrait::new());
 
     let caller = contract_address_const::<0x123>();
     set_contract_address(caller);
@@ -73,17 +91,8 @@ fn test_custom_resolver() {
     // we allow the naming to take our money
     eth.approve(naming.contract_address, price);
 
-    // we buy with no resolver, no sponsor, no discount and empty metadata
-    naming
-        .buy(
-            id,
-            th0rgal,
-            365,
-            custom_resolver.contract_address,
-            ContractAddressZeroable::zero(),
-            0,
-            0
-        );
+    // we buy with a custom resolver, no sponsor, no discount and empty metadata
+    naming.buy(id, th0rgal, 365, custom_resolver, ContractAddressZeroable::zero(), 0, 0);
 
     let domain = array![th0rgal].span();
     // by default we should have nothing written
@@ -92,9 +101,42 @@ fn test_custom_resolver() {
     assert(naming.domain_to_address(domain, array![].span()) == caller, 'wrong domain target');
 
     let domain = array![1, 2, 3, th0rgal].span();
-
     let new_target = contract_address_const::<0x6>();
     // let's try the resolving
     assert(naming.resolve(domain, 'starknet', array![].span()) == 1 + 2 + 3, 'wrong target');
     assert(naming.domain_to_address(domain, array![].span()) == new_target, 'wrong target');
+}
+
+
+#[test]
+#[available_gas(2000000000)]
+fn test_empty_custom_resolver() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let custom_resolver = utils::deploy(EmptyCustomResolver::TEST_CLASS_HASH, ArrayTrait::new());
+
+    let caller = contract_address_const::<0x123>();
+    set_contract_address(caller);
+    let id: u128 = 1;
+    let th0rgal: felt252 = 33133781693;
+
+    //we mint an id
+    identity.mint(id);
+
+    // we check how much a domain costs
+    let (_, price) = pricing.compute_buy_price(7, 365);
+
+    // we allow the naming to take our money
+    eth.approve(naming.contract_address, price);
+
+    // we buy with a custom resolver, no sponsor, no discount and empty metadata
+    naming.buy(id, th0rgal, 365, custom_resolver, ContractAddressZeroable::zero(), 0, 0);
+    let domain = array![th0rgal].span();
+    // by default we should have nothing written
+    assert(naming.resolve(domain, 'starknet', array![].span()) == 0, 'non empty starknet field');
+    // so it should resolve to the starknetid owner
+    assert(naming.domain_to_address(domain, array![].span()) == caller, 'wrong domain target');
+    let domain = array![1, th0rgal].span();
+    // let's try the resolving
+    assert(naming.domain_to_address(domain, array![].span()).into() == 0, 'wrong target');
 }

@@ -152,8 +152,9 @@ impl InternalImpl of InternalTrait {
                 .resolve(domain.slice(0, parent_start), field, hint);
             if resolver_res == 0 {
                 let hashed_domain = self.hash_domain(domain);
-                return (0, hashed_domain);
+                return (hashed_domain, 0);
             }
+            // we skip computing the domain_hash if we already have a response
             return (0, resolver_res);
         } else {
             let hashed_domain = self.hash_domain(domain);
