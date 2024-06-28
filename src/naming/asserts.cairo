@@ -37,7 +37,7 @@ impl AssertionsImpl of AssertionsTrait {
         assert(data.owner == 0 || data.expiry < now, 'unexpired domain');
 
         // Verify expiration range
-        assert(days < 365 * 25, 'max purchase of 25 years');
+        assert(days <= 365 * 25, 'max purchase of 25 years');
         assert(days > 2 * 30, 'min purchase of 2 month');
         return (hashed_domain, now, now + 86400 * days.into());
     }
@@ -60,6 +60,8 @@ impl AssertionsImpl of AssertionsTrait {
         let mut i: felt252 = 1;
         let stop = (domain.len() + 1).into();
         let mut parent_key = 0;
+        // we start from the top domain and go down until we find you are the owner,
+        // reach the domain beginning or reach a key mismatch (reset parent domain)
         loop {
             assert(i != stop, 'you don\'t own this domain');
             let i_gas_saver = i.try_into().unwrap();

@@ -1,8 +1,6 @@
+use core::array::SpanTrait;
 use naming::{
-    interface::{
-        resolver::{IResolver, IResolverDispatcher, IResolverDispatcherTrait},
-        referral::{IReferral, IReferralDispatcher, IReferralDispatcherTrait},
-    },
+    interface::referral::{IReferral, IReferralDispatcher, IReferralDispatcherTrait},
     naming::main::{
         Naming,
         Naming::{
@@ -51,24 +49,38 @@ impl InternalImpl of InternalTrait {
         };
     }
 
+    // returns the custom resolver to use for a domain (0 if none)
+    // and the parent domain length. If one parent domain has
+    // reset its subdomains, it will break and return its length,
+    // otherwise the parent length would be 0.
     fn domain_to_resolver(
-        self: @Naming::ContractState, domain: Span<felt252>, parent_start_id: u32
+        self: @Naming::ContractState, mut domain: Span<felt252>
     ) -> (ContractAddress, u32) {
-        if parent_start_id == domain.len() {
-            return (ContractAddressZeroable::zero(), 0);
+        let mut custom_resolver = ContractAddressZeroable::zero();
+        let mut parent_length = 0;
+        let mut domain_parent_key = self._domain_data.read(self.hash_domain(domain)).parent_key;
+        loop {
+            if domain.len() == 1 {
+                break;
+            };
+            // will fail on empty domain
+            let parent_domain = domain.slice(1, domain.len() - 1);
+            let hashed_parent_domain = self.hash_domain(parent_domain);
+            let parent_domain_data = self._domain_data.read(hashed_parent_domain);
+            if parent_domain_data.resolver.into() != 0 {
+                custom_resolver = parent_domain_data.resolver;
+                parent_length = parent_domain.len();
+                break;
+            }
+            if domain_parent_key != parent_domain_data.key {
+                // custom_resolver is zero
+                parent_length = parent_domain.len();
+                break;
+            }
+            domain = parent_domain;
+            domain_parent_key = parent_domain_data.parent_key;
         };
-
-        // hashing parent_domain
-        let hashed_domain = self
-            .hash_domain(domain.slice(parent_start_id, domain.len() - parent_start_id));
-
-        let domain_data = self._domain_data.read(hashed_domain);
-
-        if domain_data.resolver.into() != 0 {
-            return (domain_data.resolver, parent_start_id);
-        } else {
-            return self.domain_to_resolver(domain, parent_start_id + 1);
-        }
+        (custom_resolver, parent_length)
     }
 
     fn pay_domain(
@@ -106,7 +118,12 @@ impl InternalImpl of InternalTrait {
         // add sponsor commission if eligible
         if sponsor.into() != 0 {
             IReferralDispatcher { contract_address: self._referral_contract.read() }
-                .add_commission(discounted_price, sponsor, sponsored_addr: get_caller_address(), erc20_addr: erc20);
+                .add_commission(
+                    discounted_price,
+                    sponsor,
+                    sponsored_addr: get_caller_address(),
+                    erc20_addr: erc20
+                );
         }
     }
 
@@ -139,47 +156,6 @@ impl InternalImpl of InternalTrait {
                         Naming::DomainResolverUpdate { domain: array![domain].span(), resolver }
                     )
                 );
-        }
-    }
-
-    // returns domain_hash (or zero) and its value for a specific field
-    fn resolve_util(
-        self: @Naming::ContractState, domain: Span<felt252>, field: felt252, hint: Span<felt252>
-    ) -> (felt252, felt252) {
-        let (resolver, parent_start) = self.domain_to_resolver(domain, 1);
-        if (resolver != ContractAddressZeroable::zero()) {
-            let resolver_res = IResolverDispatcher { contract_address: resolver }
-                .resolve(domain.slice(0, parent_start), field, hint);
-            if resolver_res == 0 {
-                let hashed_domain = self.hash_domain(domain);
-                return (0, hashed_domain);
-            }
-            return (0, resolver_res);
-        } else {
-            let hashed_domain = self.hash_domain(domain);
-            let domain_data = self._domain_data.read(hashed_domain);
-            // circuit breaker for root domain
-            (
-                hashed_domain,
-                if (domain.len() == 1) {
-                    IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
-                        .get_crosschecked_user_data(domain_data.owner, field)
-                // handle reset subdomains
-                } else {
-                    // todo: optimize by changing the hash definition from H(b, a) to H(a, b)
-                    let parent_key = self
-                        ._domain_data
-                        .read(self.hash_domain(domain.slice(1, domain.len() - 1)))
-                        .key;
-
-                    if parent_key == domain_data.parent_key {
-                        IIdentityDispatcher { contract_address: self.starknetid_contract.read() }
-                            .get_crosschecked_user_data(domain_data.owner, field)
-                    } else {
-                        0
-                    }
-                }
-            )
         }
     }
 }
