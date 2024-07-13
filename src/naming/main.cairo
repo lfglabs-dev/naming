@@ -203,6 +203,9 @@ mod Naming {
         fn domain_to_address(
             self: @ContractState, domain: Span<felt252>, hint: Span<felt252>
         ) -> ContractAddress {
+            if domain.len() == 0 {
+                return ContractAddressZeroable::zero();
+            }
             let (resolver, parent_length) = self.domain_to_resolver(domain);
             // if there is a resolver starting from the top
             if (resolver != ContractAddressZeroable::zero()) {
@@ -305,9 +308,11 @@ mod Naming {
                 //     self.domain_to_address(domain, array![].span()) == address,
                 //     'domain not pointing back'
                 // );
+                println!("echo: {:?}", domain);
                 if self.domain_to_address(domain, array![].span()) != address {
                     return array![].span();
                 }
+                println!("hey");
                 domain
             }
         }
