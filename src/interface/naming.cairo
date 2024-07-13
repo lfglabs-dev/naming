@@ -89,6 +89,8 @@ trait INaming<TContractState> {
 
     fn reset_subdomains(ref self: TContractState, domain: Span<felt252>);
 
+    fn revoke_domain(ref self: TContractState, domain: Span<felt252>);
+
     fn set_address_to_domain(ref self: TContractState, domain: Span<felt252>, hint: Span<felt252>);
 
     fn clear_legacy_domain_to_address(ref self: TContractState, domain: Span<felt252>);

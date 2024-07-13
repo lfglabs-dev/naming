@@ -308,11 +308,9 @@ mod Naming {
                 //     self.domain_to_address(domain, array![].span()) == address,
                 //     'domain not pointing back'
                 // );
-                println!("echo: {:?}", domain);
                 if self.domain_to_address(domain, array![].span()) != address {
                     return array![].span();
                 }
-                println!("hey");
                 domain
             }
         }
@@ -682,6 +680,49 @@ mod Naming {
             self.emit(Event::SubdomainsReset(SubdomainsReset { domain: domain, }));
         }
 
+        // this function will reset the native resolving of a domain,
+        // it is intended to be called by the owner of a parent domain
+        // who would like to take back a specific subdomain and its 
+        // recursive subdomains but could also be used as a way to burn
+        // a root domain
+        fn revoke_domain(ref self: ContractState, domain: Span<felt252>) {
+            self.assert_control_domain(domain, get_caller_address());
+            let hashed_domain = self.hash_domain(domain);
+            let current_domain_data = self._domain_data.read(hashed_domain);
+            let new_domain_data = DomainData {
+                owner: 0,
+                resolver: ContractAddressZeroable::zero(),
+                address: ContractAddressZeroable::zero(),
+                expiry: current_domain_data.expiry,
+                key: current_domain_data.key + 1,
+                parent_key: current_domain_data.parent_key,
+            };
+            self._domain_data.write(hashed_domain, new_domain_data);
+            if current_domain_data.resolver != new_domain_data.resolver {
+                self
+                    .emit(
+                        Event::DomainResolverUpdate(
+                            DomainResolverUpdate {
+                                domain, resolver: ContractAddressZeroable::zero()
+                            }
+                        )
+                    );
+            }
+            if current_domain_data.address != new_domain_data.address {
+                self.emit(Event::LegacyDomainToAddressClear(LegacyDomainToAddressClear { domain }));
+            }
+            self.emit(Event::SubdomainsReset(SubdomainsReset { domain: domain, }));
+            self
+                .emit(
+                    Event::DomainTransfer(
+                        DomainTransfer {
+                            domain: domain,
+                            prev_owner: current_domain_data.owner,
+                            new_owner: new_domain_data.owner
+                        }
+                    )
+                );
+        }
 
         // will override your main id
         fn set_address_to_domain(
