@@ -409,3 +409,126 @@ fn test_buy_empty_domain() {
             0
         );
 }
+
+
+#[test]
+#[available_gas(2000000000)]
+fn test_subdomain_reverse() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let alpha = contract_address_const::<0x123>();
+    let bravo = contract_address_const::<0x456>();
+    let charlie = contract_address_const::<0x789>();
+
+    // we mint the ids
+    set_contract_address(alpha);
+    identity.mint(1);
+    set_contract_address(bravo);
+    identity.mint(2);
+    set_contract_address(charlie);
+    identity.mint(3);
+
+    set_contract_address(alpha);
+    let aller: felt252 = 35683102;
+
+    // we check how much a domain costs
+    let (_, price) = pricing.compute_buy_price(5, 365);
+
+    // we allow the naming to take our money
+    eth.approve(naming.contract_address, price);
+
+    // we buy with no resolver, no sponsor, no discount and empty metadata
+    naming
+        .buy(1, aller, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0);
+
+    let subdomain = array![aller, aller].span();
+
+    // we transfer aller.aller.stark to id2
+    naming.transfer_domain(subdomain, 2);
+
+    // and make sure the owner has been updated
+    assert(naming.domain_to_id(subdomain) == 2, 'owner not updated correctly');
+    set_contract_address(bravo);
+    let result = naming.address_to_domain(bravo, array![].span());
+    assert(result == array![].span(), 'unexpected result');
+    // we then set this subdomain as main domain and ensures reverse resolving works
+    identity.set_main_id(2);
+    let result = naming.address_to_domain(bravo, array![].span());
+    assert(result == subdomain, 'unexpected result');
+    // before transfering this subdomain
+    naming.transfer_domain(subdomain, 3);
+    let result = naming.address_to_domain(bravo, array![].span());
+    assert(result == array![].span(), 'unexpected result');
+}
+
+
+#[test]
+#[available_gas(2000000000)]
+fn test_use_revoke_domain() {
+    // setup
+    let (eth, pricing, identity, naming) = deploy();
+    let alpha = contract_address_const::<0x123>();
+    let bravo = contract_address_const::<0x456>();
+
+    // we mint the ids
+
+    set_contract_address(alpha);
+    identity.mint(1);
+    set_contract_address(bravo);
+    identity.mint(2);
+
+    set_contract_address(alpha);
+    let aller: felt252 = 35683102;
+
+    // we check how much a domain costs
+    let (_, price) = pricing.compute_buy_price(5, 365);
+
+    // we allow the naming to take our money
+    eth.approve(naming.contract_address, price);
+
+    // we buy with no resolver, no sponsor, no discount and empty metadata
+    naming
+        .buy(1, aller, 365, ContractAddressZeroable::zero(), ContractAddressZeroable::zero(), 0, 0);
+
+    let root_domain = array![aller].span();
+    let subdomain = array![aller, aller].span();
+
+    // we transfer aller.aller.stark to id2
+    naming.transfer_domain(subdomain, 2);
+
+    // and make sure the owner has been updated
+    assert(naming.domain_to_id(subdomain) == 2, 'owner not updated correctly');
+
+    // now bravo should be able to create a subsubdomain (charlie.aller.aller.stark):
+    set_contract_address(bravo);
+    let subsubdomain = array!['charlie', aller, aller].span();
+    naming.transfer_domain(subsubdomain, 3);
+
+    // alpha resets subdomains of aller.stark
+    set_contract_address(alpha);
+    naming.revoke_domain(subdomain);
+
+    // ensure aller.stark still resolves
+    assert(naming.domain_to_id(root_domain) == 1, 'owner not updated correctly');
+    // ensure the subdomain was reset
+    assert(naming.domain_to_id(subdomain) == 0, 'target not updated correctly');
+    assert(
+        naming.domain_to_address(subdomain, array![].span()) == ContractAddressZeroable::zero(),
+        'owner not updated correctly'
+    );
+    assert(
+        naming.domain_to_data(subdomain).resolver == ContractAddressZeroable::zero(),
+        'resolver not updated correctly'
+    );
+
+    // ensure subsubdomain too
+    assert(naming.domain_to_id(subsubdomain) == 0, 'owner not updated correctly');
+    assert(
+        naming.domain_to_address(subsubdomain, array![].span()) == ContractAddressZeroable::zero(),
+        'target not updated correctly'
+    );
+    assert(
+        naming.domain_to_data(subsubdomain).resolver == ContractAddressZeroable::zero(),
+        'resolver not updated correctly'
+    );
+}
