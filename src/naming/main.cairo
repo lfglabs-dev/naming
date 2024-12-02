@@ -136,7 +136,7 @@ mod Naming {
         _server_pub_key: felt252,
         _whitelisted_renewal_contracts: LegacyMap<ContractAddress, bool>,
         // a for alpha, as we will probably do this campaign again in the future
-        _ar_discount_blacklist_b: LegacyMap<felt252, bool>,
+        _ar_discount_blacklist_c: LegacyMap<felt252, bool>,
         _ar_discount_renew_enabled: bool,
         #[substorage(v0)]
         storage_read: storage_read_component::Storage,
@@ -521,7 +521,7 @@ mod Naming {
             assert(self._ar_discount_renew_enabled.read(), 'Discount disabled');
 
             // We check that domain didn't already claim the discount
-            assert(!self._ar_discount_blacklist_b.read(domain), 'You can\'t claim this twice');
+            assert(!self._ar_discount_blacklist_c.read(domain), 'You can\'t claim this twice');
 
             // We check it's a valid AR contract, then we check that AR is enabled,
             // we don't validate the pricing because it could change
@@ -536,7 +536,7 @@ mod Naming {
             assert(erc20_allowance != 0, 'Invalid ERC20 allowance');
 
             // We then blacklist that domain for this discount
-            self._ar_discount_blacklist_b.write(domain, true);
+            self._ar_discount_blacklist_c.write(domain, true);
 
             // We can finally renew the domain with no SaleMetadata event since it's free
             let now = get_block_timestamp();
